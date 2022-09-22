@@ -12,12 +12,12 @@ def fix_names_w_compartment_suffix(model):
     names_w_compartment_suffix = find_names_w_compartment_suffix(model)
 
     # Fix the metabolite names
-    for name in names_w_compartment_suffix:
+    for id in names_w_compartment_suffix:
         # Trim the compartment suffix
-        trimmed_name = trim_name(name)
+        trimmed_name = trim_name(names_w_compartment_suffix[id])
 
         # Find the metabolite with the compartment suffix
-        met = model.metabolites.get_by_id(name)
+        met = model.metabolites.get_by_id(id)
 
         # Change the metabolite name
         met.name = trimmed_name
@@ -55,10 +55,10 @@ def find_names_w_compartment_suffix(model):
         model (cobra.Model): A cobra model.
 
     Returns:
-        list: A list of metabolite names with a compartment suffix.
+        dict: A dictionary of metabolite IDs and names.
 
     """
     # Find metabolites with a compartment suffix
-    names_w_compartment_suffix = [met.name for met in model.metabolites if met.name[-3:] in ['[c]', '[e]']]
+    names_w_compartment_suffix = {met.id: met.name for met in model.metabolites if met.name[-3:] in ['[c]', '[e]']}
 
     return names_w_compartment_suffix
