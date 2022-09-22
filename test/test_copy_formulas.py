@@ -40,7 +40,7 @@ class TestCopyFormulas(unittest.TestCase):
         cobra.io.write_sbml_model(model, tmp_out)
 
         # Compare the model with the expected model
-        assert filecmp.cmp(tmp_out, 'test_files/e_coli_core_missing_formulas_fixed.xml')
+        assert filecmp.cmp(tmp_out, os.path.join(TESTFILE_DIR, 'e_coli_core_missing_formulas_fixed.xml'))
 
 
 if __name__ == '__main__':

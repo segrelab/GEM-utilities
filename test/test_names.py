@@ -1,17 +1,20 @@
 import unittest
 import tempfile
 import filecmp
+import os
 
 import cobra
 
 from gem_utils import names
+
+TESTFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_files')
 
 
 class TestNames(unittest.TestCase):
     def test_find_names_w_compartment_suffix(self):
         """Test find_names_w_compartment_suffix function."""
         # Read in the E coli core model
-        model = cobra.io.read_sbml_model('test_files/e_coli_core_compartment_names.xml')
+        model = cobra.io.read_sbml_model(os.path.join(TESTFILE_DIR, 'e_coli_core_compartment_names.xml'))
 
         # Find metabolites with a compartment suffix
         names_w_compartment_suffix = names.find_names_w_compartment_suffix(model)
@@ -31,7 +34,7 @@ class TestNames(unittest.TestCase):
     def test_fix_names_w_compartment_suffix(self):
         """Test fix_names_w_compartment_suffix function."""
         # Read in the E coli core model
-        model = cobra.io.read_sbml_model('test_files/e_coli_core_compartment_names.xml')
+        model = cobra.io.read_sbml_model(os.path.join(TESTFILE_DIR, 'e_coli_core_compartment_names.xml'))
 
         # Fix the metabolite names
         names.fix_names_w_compartment_suffix(model)
@@ -41,4 +44,4 @@ class TestNames(unittest.TestCase):
         cobra.io.write_sbml_model(model, tmp_out)
 
         # Compare the model with the expected model
-        assert filecmp.cmp(tmp_out, 'test_files/e_coli_core_missing_formulas_fixed.xml')
+        assert filecmp.cmp(tmp_out, os.path.join(TESTFILE_DIR, 'e_coli_core_missing_formulas_fixed.xml'))
