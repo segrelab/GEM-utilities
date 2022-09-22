@@ -11,7 +11,7 @@ class TestNames(unittest.TestCase):
     def test_find_names_w_compartment_suffix(self):
         """Test find_names_w_compartment_suffix function."""
         # Read in the E coli core model
-        model = cobra.io.read_sbml_model('test_files/e_coli_core_missing_formulas.xml')
+        model = cobra.io.read_sbml_model('test_files/e_coli_core_compartment_names.xml')
 
         # Find metabolites with a compartment suffix
         names_w_compartment_suffix = names.find_names_w_compartment_suffix(model)
