@@ -19,3 +19,13 @@ class TestNames(unittest.TestCase):
         # Assert that the correct metabolites are found
         self.assertEqual(len(names_w_compartment_suffix), 1)
         self.assertIn('L-Glutamine[e]', names_w_compartment_suffix)
+
+    def test_trim_name(self):
+        """Test trim_name function."""
+        # Trim the compartment suffix
+        trimmed_name = names.trim_name('L-Glutamine[e]')
+
+        # Assert that the compartment suffix is trimmed
+        self.assertEqual(trimmed_name, 'L-Glutamine')
+
+

@@ -43,7 +43,7 @@ def trim_name(name):
         raise ValueError('The compartment suffix is not valid.')
 
     # Trim the compartment suffix
-    trimmed_name = name[:-2]
+    trimmed_name = name[:-3]
 
     return trimmed_name
 
