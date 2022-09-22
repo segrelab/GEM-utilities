@@ -4,7 +4,7 @@ import filecmp
 
 import cobra
 
-from gem_utils import copy_formulas
+from gem_utils import missing_formulas
 
 
 class TestCopyFormulas(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestCopyFormulas(unittest.TestCase):
         self.assertFalse(ac_e_formula)
 
         # Copy the chemical formula from the internal acetate (M_ac_c) to the external acetate (M_ac_e)
-        copy_formulas.copy_formulas(model, 'ac_c', 'ac_e')
+        missing_formulas.copy_formulas(model, 'ac_c', 'ac_e')
 
         # Now get the chemical formula for external acetate
         ac_e_formula = model.metabolites.get_by_id('ac_e').formula
