@@ -17,5 +17,5 @@ class TestNames(unittest.TestCase):
         names_w_compartment_suffix = names.find_names_w_compartment_suffix(model)
 
         # Assert that the correct metabolites are found
-        self.assertEqual(len(names_w_compartment_suffix), 2)
-        self.assertIn('ac_e', names_w_compartment_suffix)
+        self.assertEqual(len(names_w_compartment_suffix), 1)
+        self.assertIn('L-Glutamine[e]', names_w_compartment_suffix)
