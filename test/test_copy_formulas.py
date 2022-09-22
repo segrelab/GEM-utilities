@@ -1,10 +1,13 @@
 import unittest
 import tempfile
 import filecmp
+import os
 
 import cobra
 
 from gem_utils import missing_formulas
+
+TESTFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_files')
 
 
 class TestCopyFormulas(unittest.TestCase):
@@ -12,7 +15,7 @@ class TestCopyFormulas(unittest.TestCase):
     def test_copy_formulas(self):
         """Test copy_formulas function."""
         # Read in the E coli core model where the external acetate (M_ac_e) is missing a chemical formula
-        model = cobra.io.read_sbml_model('test_files/e_coli_core_missing_formulas.xml')
+        model = cobra.io.read_sbml_model(os.path.join(TESTFILE_DIR, 'e_coli_core_missing_formulas.xml'))
 
         # Get the chemical formula for external acetate
         ac_e_formula = model.metabolites.get_by_id('ac_e').formula
