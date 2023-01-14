@@ -5,7 +5,7 @@ import os
 
 import cobra
 
-from gem_utils import names
+from gem_utilities import names
 
 TESTFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_files')
 

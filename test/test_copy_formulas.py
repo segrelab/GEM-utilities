@@ -5,7 +5,7 @@ import os
 
 import cobra
 
-from gem_utils import missing_formulas
+from gem_utilities import missing_formulas
 
 TESTFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_files')
 
