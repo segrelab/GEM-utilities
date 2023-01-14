@@ -1,3 +1,6 @@
+import logging
+
+
 def copy_formulas(model, source_id, target_id):
     """Copy the chemical formula from one metabolite to another.
 
@@ -21,6 +24,7 @@ def copy_formulas(model, source_id, target_id):
 
     return None
 
+
 def find_matching_metabolite(model, metabolite):
     """Find a metabolite with the same name in a different compartment.
 
@@ -43,7 +47,7 @@ def find_matching_metabolite(model, metabolite):
 
     # Check that there is only one matching metabolite
     if len(matching_met) != 1:
-        raise ValueError('There is not exactly one matching metabolite.')
-
-    # Return the matching metabolite
-    return matching_met[0]
+        logging.warning('There is not exactly one matching metabolite.')
+    else:
+        # Return the matching metabolite
+        return matching_met[0]
