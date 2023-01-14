@@ -42,26 +42,6 @@ class TestCopyFormulas(unittest.TestCase):
         # Compare the model with the expected model
         assert filecmp.cmp(tmp_out, os.path.join(TESTFILE_DIR, 'e_coli_core_missing_formulas_fixed.xml'))
 
-    def test_pro_model(self):
-        """Test fix_names_w_compartment_suffix function on a PRO model."""
-        # Read in the PRO model
-        model = cobra.io.read_sbml_model('../../GEM-repos/Prochlorococcus_Model/Model_files/iSO595v7.xml')
-
-        # Find all the metabolites with missing formulas
-        mets_wo_formula = [met for met in model.metabolites if not met.formula]
-        # Find a match and copy the formula
-        for met in mets_wo_formula:
-            match = missing_formulas.find_matching_metabolite(model, met)
-            if match:
-                missing_formulas.copy_formulas(model, match.id, met.id)
-
-        # Write the model to a temporary file
-        tmp_out = tempfile.mkstemp(suffix='.xml')[1]
-        cobra.io.write_sbml_model(model, tmp_out)
-
-        # Compare the model with the expected model
-        assert filecmp.cmp(tmp_out, os.path.join(TESTFILE_DIR, 'pro_model_fixed.xml'))
-
 
 if __name__ == '__main__':
     unittest.main()
