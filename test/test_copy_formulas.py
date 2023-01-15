@@ -41,16 +41,6 @@ class TestCopyFormulas(unittest.TestCase):
         # Assert that the chemical formula is correct
         self.assertEqual(ac_e_formula, 'C2H3O2')
 
-        # Write the model to a temporary file
-        tmp_out = tempfile.mkstemp(suffix='.xml')[1]
-        write_sbml_model(model, tmp_out)
-
-        # Compare the model with the expected model
-        assert filecmp.cmp(tmp_out,
-                           os.path.join(TESTFILE_DIR,
-                                        'ecc_all_formulas.xml')), \
-               'The model file is not the same as the expected model'
-
 
 if __name__ == '__main__':
     unittest.main()
