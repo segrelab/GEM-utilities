@@ -3,7 +3,7 @@ import tempfile
 import filecmp
 import os
 
-import cobra
+from cobra.io import read_sbml_model, write_sbml_model
 
 from gem_utilities import missing_formulas
 
@@ -17,8 +17,8 @@ class TestCopyFormulas(unittest.TestCase):
         """Test copy_formulas function."""
         # Read in the E coli core model where the external acetate
         # (M_ac_e) is missing a chemical formula
-        model = cobra.io.read_sbml_model(os.path.join(TESTFILE_DIR,
-                                                      'e_coli_core_missing_formulas.xml'))
+        model = read_sbml_model(os.path.join(TESTFILE_DIR,
+                                             'ecc_missing_formulas.xml'))
 
         # Get the chemical formula for external acetate
         ac_e_formula = model.metabolites.get_by_id('ac_e').formula
@@ -43,13 +43,13 @@ class TestCopyFormulas(unittest.TestCase):
 
         # Write the model to a temporary file
         tmp_out = tempfile.mkstemp(suffix='.xml')[1]
-        cobra.io.write_sbml_model(model, tmp_out)
+        write_sbml_model(model, tmp_out)
 
         # Compare the model with the expected model
         assert filecmp.cmp(tmp_out,
                            os.path.join(TESTFILE_DIR,
-                                        'e_coli_core_missing_formulas_fixed.xml')), \
-               'The model written to the temporary file is not the same as the expected model'
+                                        'ecc_missing_formulas_fixed.xml')), \
+               'The model file is not the same as the expected model'
 
 
 if __name__ == '__main__':
