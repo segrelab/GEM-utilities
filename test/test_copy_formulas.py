@@ -48,7 +48,7 @@ class TestCopyFormulas(unittest.TestCase):
         # Compare the model with the expected model
         assert filecmp.cmp(tmp_out,
                            os.path.join(TESTFILE_DIR,
-                                        'ecc_missing_formulas_fixed.xml')), \
+                                        'ecc_all_formulas.xml')), \
                'The model file is not the same as the expected model'
 
 
