@@ -5,7 +5,7 @@ Genome-Scale Metabolic Models (GEMs) that can be run from the command line or
 as functions in Python.
 
 [![GitHub Super-Linter](https://github.com/segrelab/GEM-utilities/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
-[![gh-action badge](https://github.com/segrelab/GEM-utilities/actions/workflows/python-app.yml/badge.svg)](https://github.com/segrelab/GEM-utilities/actions)
+[![gh-action badge](https://github.com/segrelab/GEM-utilities/workflows/Python%20package/badge.svg)](https://github.com/segrelab/GEM-utilities/actions/)
 
 ## Installation
 
