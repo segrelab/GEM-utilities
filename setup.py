@@ -1,9 +1,9 @@
 from distutils.core import setup
 
 setup(
-    name='GEM-utils',
+    name='GEM-utilities',
     version='0.1dev',
-    packages=['gem_utils',],
+    packages=['gem_utilities',],
     license='MIT License',
     long_description=open('README.md').read(),
 )
