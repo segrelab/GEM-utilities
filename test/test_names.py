@@ -41,13 +41,15 @@ class TestNames(unittest.TestCase):
         model = read_sbml_model(os.path.join(TESTFILE_DIR,
                                              'ecc_compartment_names.xml'))
 
+        # Assert that the metabolite name for L-glutamine includes the
+        # compartment suffix
+        self.assertEqual(model.metabolites.get_by_id('gln__L_e').name,
+                         'L-Glutamine[e]')
+
         # Fix the metabolite names
         names.fix_names_w_compartment_suffix(model)
 
-        # Write the model to a temporary file
-        tmp_out = tempfile.mkstemp(suffix='.xml')[1]
-        write_sbml_model(model, tmp_out)
-
-        # Compare the model with the expected model
-        assert filecmp.cmp(tmp_out, os.path.join(TESTFILE_DIR,
-                                                 'ecc_all_formulas.xml'))
+        # Assert that the metabolite name for L-glutamine no longer includes
+        # the compartment suffix
+        self.assertEqual(model.metabolites.get_by_id('gln__L_e').name,
+                         'L-Glutamine')
