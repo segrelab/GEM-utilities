@@ -10,7 +10,7 @@ transparent as possible, whether it's:
 ## Asking questions
 
 * GEM utilities has
-[online documentation available](https://sbol-utilities.readthedocs.io/en/latest/). 
+[online documentation available](https://gem-utilities.readthedocs.io/en/latest/#). 
 * If you need help and do not easily find an answer in the documentation,
 [ask your question in a new issue](https://github.com/segrelab/GEM-utilities/issues/new). 
 * Any question that you have likely indicates a shortcoming in the
