@@ -46,7 +46,7 @@ def is_maintenance_reaction(model, reaction, notation='ModelSEED'):
 
 
 def find_maintenance_reaction(model):
-    """A function that searches all the reactions in a model for a 
+    """A function that searches all the reactions in a model for a
     maintenance reaction, and returns the reaction if it finds one, a
     list of possible reactions if it find multiple, and returns none if
     it finds none.

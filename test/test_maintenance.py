@@ -37,7 +37,7 @@ class TestMaintenance(unittest.TestCase):
         with self.assertRaises(ValueError):
             maintenance.is_maintenance_reaction(model, maintenance_rxn,
                                                 'invalid notation')
-            
+
         # Check that you get no maintenance reaction if you use the wrong
         # notation
         self.assertFalse(maintenance.is_maintenance_reaction(model,
