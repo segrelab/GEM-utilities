@@ -20,6 +20,9 @@ implementation of the idea is based on the implementation presented in
 https://doi.org/10.1371/journal.pcbi.1003126
 '''
 
+from optlang.symbolics import Zero
+import cobra
+
 def add_dilution_constraints(
     given_model, mets_to_dilute = None, split_rxns = False, dil_factor = 0,
     threads = 1, verbose = 1
