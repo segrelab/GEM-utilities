@@ -5,6 +5,9 @@ import os
 
 from cobra.io import read_sbml_model, write_sbml_model
 
+import sys
+sys.path.append("/Users/huishi/Documents/Github/GEM-utilities/gem_utilities")
+
 from gem_utilities import missing_formulas
 
 TESTFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)),
