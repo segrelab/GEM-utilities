@@ -59,21 +59,27 @@ def process_intervention(
     return model_new
 
 
-def create_cobra_reaction(model: cobra.Model, modelseed_db: dict, rxn_id: str) -> tuple:
+def create_cobra_reaction(
+    model: cobra.Model, modelseed_rxn_db: dict, modelseed_cpd_db: dict, rxn_id: str
+) -> tuple:
     """
     Create a COBRApy Reaction object from a ModelSEED database entry.
 
     Parameters:
         model (cobra.Model): Model to which the reaction and new metabolites will be added.
-        modelseed_db (dict): Dictionary of ModelSEED reaction entries.
+        modelseed_rxn_db (dict): Dictionary of ModelSEED reaction entries.
+        modelseed_cpd_db (dict): Dictionary of ModelSEED compound entries.
         rxn_id (str): Reaction ID to add.
 
     Returns:
         cobra.Reaction: The created reaction.
         list: List of new metabolites added to the model.
     """
-    rxn = modelseed_db[rxn_id]
-    reaction_id = rxn["id"] + "_c0"  # Assume cytosolic compartment
+    rxn = modelseed_rxn_db[rxn_id]
+    # TODO: Check if the reaction is a transport reaction and handle it accordingly
+    reaction_id = (
+        rxn["id"] + "_c0"
+    )  # Assume cytosolic compartment  # FIXME: Hardcoded compartment
     reaction = cobra.Reaction(reaction_id, name=rxn["name"])
     mets_to_add = []
     # Set reaction bounds based on reversibility
@@ -104,6 +110,7 @@ def create_cobra_reaction(model: cobra.Model, modelseed_db: dict, rxn_id: str) -
         met_id = f"{met_id_base}_{compartment}"
         met_name = parts[4].strip('"') if len(parts) >= 5 else met_id
         # Add metabolite if not present
+        # TODO: Make the metabolite more detailed (e.g. add formula, charge, etc.)
         if met_id not in model.metabolites:
             met_obj = cobra.Metabolite(
                 id=met_id, name=met_name, compartment=compartment
@@ -114,3 +121,63 @@ def create_cobra_reaction(model: cobra.Model, modelseed_db: dict, rxn_id: str) -
         reaction.add_metabolites({met_obj: coeff})
     model.add_reactions([reaction])
     return reaction, mets_to_add
+
+
+def create_cobra_metabolite(
+    modelseed_cpd_db: dict, cpd_id: str, compartment: str
+) -> cobra.Metabolite:
+    """
+    Create a COBRApy Metabolite object from a ModelSEED database entry.
+
+    Parameters:
+        modelseed_cpd_db (dict): Dictionary of ModelSEED compound entries.
+        cpd_id (str): Compound ID to add.
+
+    Returns:
+        cobra.Metabolite: The created metabolite.
+    """
+    # Get the compound entry from the modelSEED database
+    cpd = modelseed_cpd_db[cpd_id]
+
+    # Make the metabolite ID compartment-specific and retrieve the name
+    met_id = f"{cpd_id}_{compartment}"
+    met_name = cpd["name"]
+
+    # Make a new metabolite object with the ID and name
+    met = cobra.Metabolite(id=met_id, name=met_name, compartment=compartment)
+
+    # Add the rest of the information to the metabolite object
+    met.formula = cpd["formula"] if "formula" in cpd else ""
+    met.charge = cpd["charge"] if "charge" in cpd else ""
+    met.annotation = parse_aliases(cpd["aliases"]) if "aliases" in cpd else {}
+
+    return met
+
+
+def parse_aliases(aliases: list) -> dict:
+    """
+    Parse the aliases list to extract relevant annotations.
+
+    Parameters:
+        aliases (list): List of alias strings.
+
+    Returns:
+        dict: Dictionary of parsed annotations.
+    """
+    annotations = {}
+    for alias in aliases:
+        # Split the string into a key and value around the first ":"
+        parts = alias.split(":")
+        if len(parts) == 2:
+            key = parts[0].lower().strip()
+            value = parts[1].strip()
+        else:
+            continue
+        # Skip if the key is "name"
+        if key == "name":
+            continue
+        # Split the value by ";" to get a list of values
+        value = [v.strip() for v in value.split(";")]
+        # Add the key-value pair to the annotations dictionary
+        annotations[key] = value
+    return annotations
