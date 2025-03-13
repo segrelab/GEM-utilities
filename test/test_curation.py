@@ -81,8 +81,8 @@ class TestCuration(unittest.TestCase):
         """Test create_cobra_reaction function, by adding a reaction
         (and the corresponding metabolites) to the E.coli core model."""
 
-        # Load the E. coli core model
-        model = cobra.io.load_model("textbook")
+        # Load the test model
+        model = cobra.io.read_sbml_model(os.path.join(TESTFILE_DIR, "test_model.xml"))
 
         # Load the (subset of the) modelseed databases
         rxn_db = json.load(
@@ -98,10 +98,18 @@ class TestCuration(unittest.TestCase):
 
         # Create a new reaction
         new_rxn, new_mets = curation.create_cobra_reaction(
-            model, template_rxn_db, template_met_db, "EX_glc__D_e"
+            model, template_rxn_db, template_met_db, "rxn00001", "c0"
         )
         # Add the new reaction to the model
         model.add_reactions([new_rxn])
         model.add_metabolites(new_mets)
         # Check that the reaction was added
-        self.assertIn("EX_glc__D_e", [rxn.id for rxn in model.reactions])
+        self.assertIn("rxn00001_c0", [rxn.id for rxn in model.reactions])
+
+        # Save the model to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".xml") as temp_file:
+            cobra.io.write_sbml_model(model, temp_file.name)
+            # Check that the model file is valid SBML
+            results = cobra.io.validate_sbml_model(temp_file.name)
+            errors = results[1]['SBML_ERROR']
+            self.assertEqual(0, len(errors), msg=f"SBML validation errors: {errors}")
