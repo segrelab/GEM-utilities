@@ -1,3 +1,5 @@
+import warnings
+
 import cobra
 import pandas as pd
 
@@ -22,6 +24,11 @@ def process_intervention(
         rxn_id = row["reaction"].strip()  # remove any extra whitespace
         change = row["change"].strip() if " change" in row else row["change"].strip()
         gene = row["gene"].strip() if " gene" in row else row["gene"].strip()
+        # Give a warning if the gene is not empty or "unknown"
+        if gene and gene.lower() != "unknown":
+            warnings.warn(
+                f"A gene name, {gene}, was given for reaction {rxn_id}, but will not be added to the model."
+            )
         if change == "-":
             # Removal intervention: check if the reaction exists
             if rxn_id in model_new.reactions:
@@ -35,23 +42,11 @@ def process_intervention(
             if rxn_id in model_new.reactions:
                 report.append(f"Reaction {rxn_id} already exists; not added")
             else:
-                new_rxn, new_mets = create_cobra_reaction(
-                    model_new, template_rxn_db, rxn_id
-                )
-                # Only add gene information if the gene is not "unknown"
-                if gene.lower() != "unknown":
-                    # Here you might update the gene_reaction_rule or add gene objects,
-                    # e.g., new_rxn.gene_reaction_rule = gene
-                    new_rxn.gene_reaction_rule = gene
-                    report.append(f"Added reaction {rxn_id} with gene {gene}")
-                else:
-                    report.append(
-                        f"Added reaction {rxn_id} without gene info (gene is unknown)"
-                    )
-                model_new.add_reactions([new_rxn])
-                model_new.add_metabolites(new_mets)
+                new_model = add_ms_reaction_from_id(model_new, template_rxn_db, rxn_id)
         else:
             report.append(f"Unrecognized change '{change}' for reaction {rxn_id}")
+        # Update which model to use for the next iteration
+        model_new = new_model if "new_model" in locals() else model_new
     # --- Print the report ---
     print("Intervention Report:")
     for line in report:
