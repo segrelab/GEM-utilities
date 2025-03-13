@@ -1,3 +1,5 @@
+# Based on https://cobrapy.readthedocs.io/en/latest/building_model.html
+
 from cobra import Metabolite, Model, Reaction
 
 model = Model("example_model")
