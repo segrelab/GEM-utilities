@@ -38,7 +38,6 @@ reaction.add_metabolites(
     {malACP_c: -1.0, h_c: -1.0, ddcaACP_c: -1.0, co2_c: 1.0, ACP_c: 1.0, omrsACP_c: 1.0}
 )
 
-
 reaction.gene_reaction_rule = "( STM2378 or STM1197 )"
 
 model.add_reactions([reaction])
