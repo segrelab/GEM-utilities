@@ -66,7 +66,7 @@ def add_ms_reaction_from_id(
     rxn_id: str,
     rxn_compartment: str = "c0",
     external_compartment: str = "e0",
-) -> cobra.model:
+) -> cobra.Model:
     """
     Create a COBRApy Reaction object (and any new metabolites) from a ModelSEED
     database entry and add it to a model.
@@ -88,7 +88,7 @@ def add_ms_reaction_from_id(
     # Get the reaction entry from the modelSEED database
     rxn = modelseed_rxn_db[rxn_id]
     # TODO: Check if the reaction is a transport reaction and handle it accordingly
-    reaction_id = rxn["id"] + "_" + compartment
+    reaction_id = rxn["id"] + "_" + rxn_compartment
     reaction = cobra.Reaction(reaction_id, name=rxn["name"])
     mets_to_add = []
     # Set reaction bounds based on reversibility
