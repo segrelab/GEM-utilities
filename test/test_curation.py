@@ -1,10 +1,11 @@
-import filecmp
 import json
 import os
 import tempfile
 import unittest
+from io import StringIO
 
 import cobra
+import pandas as pd
 
 from gem_utilities import curation
 
@@ -153,6 +154,60 @@ class TestCuration(unittest.TestCase):
         self.assertIn("cpd00009_e", [met.id for met in new_model.metabolites])
 
         # Check that the corresponding exchange reactions were added
+        self.assertTrue(
+            ("EX_cpd00009_e" in [rxn.id for rxn in new_model.reactions])
+            and ("EX_cpd00009_e" not in [rxn.id for rxn in model.reactions])
+        )
+
+        # Save the model to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".xml") as temp_file:
+            cobra.io.write_sbml_model(new_model, temp_file.name)
+            # Check that the model file is valid SBML
+            results = cobra.io.validate_sbml_model(temp_file.name)
+            errors = results[1]["SBML_ERROR"]
+            self.assertEqual(0, len(errors), msg=f"SBML validation errors: {errors}")
+
+    def test_process_intervention_df(self):
+        """Test function to process interventions from a DataFrame."""
+        intervention_csv = """
+        reaction, change, gene
+        rxn00001,+,unknown
+        rxn05145,+,unknown
+        """
+
+        # Use StringIO to simulate a file
+        df = pd.read_csv(StringIO(intervention_csv.strip()))
+
+        # Load the test model
+        model = cobra.io.read_sbml_model(os.path.join(TESTFILE_DIR, "test_model.xml"))
+
+        # Load the (subset of the) modelseed databases
+        rxn_db = json.load(
+            open(os.path.join(TESTFILE_DIR, "mini_modelseed_db_reactions.json"))
+        )
+        met_db = json.load(
+            open(os.path.join(TESTFILE_DIR, "mini_modelseed_db_compounds.json"))
+        )
+
+        # Convert the ModelSEED databases to dictionaries for easy searching
+        template_rxn_db = {rxn["id"]: rxn for rxn in rxn_db if not rxn["is_obsolete"]}
+        template_met_db = {met["id"]: met for met in met_db if not met["is_obsolete"]}
+
+        # Process the interventions
+        new_model = curation.process_intervention_df(
+            model, df, template_rxn_db, template_met_db, "c", "c", "e"
+        )
+
+        # Check that the reactions from the DF, and the associate exchange
+        # reaction were added
+        self.assertTrue(
+            ("rxn00001_c" in [rxn.id for rxn in new_model.reactions])
+            and ("rxn00001_c" not in [rxn.id for rxn in model.reactions])
+        )
+        self.assertTrue(
+            ("rxn05145_c" in [rxn.id for rxn in new_model.reactions])
+            and ("rxn05145_c" not in [rxn.id for rxn in model.reactions])
+        )
         self.assertTrue(
             ("EX_cpd00009_e" in [rxn.id for rxn in new_model.reactions])
             and ("EX_cpd00009_e" not in [rxn.id for rxn in model.reactions])

@@ -5,15 +5,32 @@ import pandas as pd
 
 
 def process_intervention_df(
-    model: cobra.Model, df: pd.DataFrame, template_rxn_db: dict
+    model: cobra.Model,
+    df: pd.DataFrame,
+    modelseed_rxn_db: dict,
+    modelseed_cpd_db: dict,
+    rxn_compartment: str = "c0",
+    internal_compartment: str = "c0",
+    external_compartment: str = "e0",
 ) -> cobra.Model:
     """
     Process interventions on a metabolic model based on a DataFrame of changes.
 
     Parameters:
         model (cobra.Model): The original metabolic model.
-        df (pandas.DataFrame): DataFrame containing intervention details with columns 'reaction', 'change', and 'gene'.
-        template_rxn_db (dict): Dictionary of template reactions for adding new reactions.
+        df (pandas.DataFrame): DataFrame containing intervention details with
+            columns 'reaction', 'change', and 'gene'.
+        modelseed_rxn_db (dict): Dictionary of template reactions for adding
+            new reactions.
+        model_seed_cpd_db (dict): Dictionary of template compounds for adding
+            new metabolites.
+        rxn_compartment (str): Compartment code for the reactions. Default is
+            "c0". Note- there is currently no way to specify different
+            compartments for different reactions.
+        internal_compartment (str): Compartment code for internal metabolites.
+            Default is "c0".
+        external_compartment (str): Compartment code for external metabolites.
+            Default is "e0".
 
     Returns:
         cobra.Model: The modified metabolic model after applying interventions.
@@ -22,8 +39,8 @@ def process_intervention_df(
     report = []  # to store a report of interventions
     for idx, row in df.iterrows():
         rxn_id = row["reaction"].strip()  # remove any extra whitespace
-        change = row["change"].strip() if " change" in row else row["change"].strip()
-        gene = row["gene"].strip() if " gene" in row else row["gene"].strip()
+        change = row[" change"].strip() if " change" in row else row["change"].strip()
+        gene = row[" gene"].strip() if " gene" in row else row["gene"].strip()
         # Give a warning if the gene is not empty or "unknown"
         if gene and gene.lower() != "unknown":
             warnings.warn(
@@ -42,7 +59,20 @@ def process_intervention_df(
             if rxn_id in model_new.reactions:
                 report.append(f"Reaction {rxn_id} already exists; not added")
             else:
-                new_model = add_ms_reaction_from_id(model_new, template_rxn_db, rxn_id)
+                report.append(
+                    f"Adding reaction {rxn_id} to compartment {rxn_compartment}"
+                )
+                # TODO: Add a column to the dataframe for reaciton compartment
+                # and pass that to this funciton as the rxn_compartment
+                new_model = add_ms_reaction_from_id(
+                    model_new,
+                    modelseed_rxn_db,
+                    modelseed_cpd_db,
+                    rxn_id,
+                    rxn_compartment=rxn_compartment,
+                    internal_compartment=internal_compartment,
+                    external_compartment=external_compartment,
+                )
         else:
             report.append(f"Unrecognized change '{change}' for reaction {rxn_id}")
         # Update which model to use for the next iteration
