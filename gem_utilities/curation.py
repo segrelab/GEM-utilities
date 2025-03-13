@@ -2,7 +2,17 @@ import cobra
 
 
 def process_intervention(model, df, template_rxn_db):
-    # --- Process the interventions __-
+    """
+    Process interventions on a metabolic model based on a DataFrame of changes.
+
+    Parameters:
+        model (cobra.Model): The original metabolic model.
+        df (pandas.DataFrame): DataFrame containing intervention details with columns 'reaction', 'change', and 'gene'.
+        template_rxn_db (dict): Dictionary of template reactions for adding new reactions.
+
+    Returns:
+        cobra.Model: The modified metabolic model after applying interventions.
+    """
     model_new = model.copy()
     report = []  # to store a report of interventions
     for idx, row in df.iterrows():
@@ -49,12 +59,15 @@ def process_intervention(model, df, template_rxn_db):
 def create_cobra_reaction(model, modelseed_db, rxn_id):
     """
     Create a COBRApy Reaction object from a ModelSEED database entry.
+
     Parameters:
         model (cobra.Model): Model to which the reaction and new metabolites will be added.
         modelseed_db (dict): Dictionary of ModelSEED reaction entries.
         rxn_id (str): Reaction ID to add.
+
     Returns:
         cobra.Reaction: The created reaction.
+        list: List of new metabolites added to the model.
     """
     rxn = modelseed_db[rxn_id]
     reaction_id = rxn["id"] + "_c0"  # Assume cytosolic compartment
