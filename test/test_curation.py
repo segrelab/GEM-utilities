@@ -65,8 +65,8 @@ class TestCuration(unittest.TestCase):
         )
         self.assertEqual(new_met.notes, {})
 
-        # Add it to an empty model
-        model = cobra.Model()
+        # Add it to my test model
+        model = cobra.io.read_sbml_model(os.path.join(TESTFILE_DIR, "test_model.xml"))
         model.add_metabolites([new_met])
 
         # Save the model to a temporary file
@@ -75,7 +75,7 @@ class TestCuration(unittest.TestCase):
             # Check that the model file is valid SBML
             results = cobra.io.validate_sbml_model(temp_file.name)
             errors = results[1]['SBML_ERROR']
-            self.assertTrue(0, len(errors), msg=f"SBML validation errors: {errors}")
+            self.assertEqual(0, len(errors), msg=f"SBML validation errors: {errors}")
 
     def test_create_cobra_reaction(self):
         """Test create_cobra_reaction function, by adding a reaction
