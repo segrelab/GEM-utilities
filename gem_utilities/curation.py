@@ -1,7 +1,10 @@
 import cobra
+import pandas as pd
 
 
-def process_intervention(model, df, template_rxn_db):
+def process_intervention(
+    model: cobra.Model, df: pd.DataFrame, template_rxn_db: dict
+) -> cobra.Model:
     """
     Process interventions on a metabolic model based on a DataFrame of changes.
 
