@@ -108,13 +108,10 @@ def create_cobra_reaction(
         else:
             compartment = comp_code
         met_id = f"{met_id_base}_{compartment}"
-        met_name = parts[4].strip('"') if len(parts) >= 5 else met_id
         # Add metabolite if not present
         # TODO: Make the metabolite more detailed (e.g. add formula, charge, etc.)
         if met_id not in model.metabolites:
-            met_obj = cobra.Metabolite(
-                id=met_id, name=met_name, compartment=compartment
-            )
+            met_obj = create_cobra_metabolite(modelseed_cpd_db, met_id_base, compartment)
             mets_to_add.append(met_obj)
         else:
             met_obj = model.metabolites.get_by_id(met_id)
