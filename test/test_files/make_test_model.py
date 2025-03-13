@@ -1,6 +1,11 @@
 # Based on https://cobrapy.readthedocs.io/en/latest/building_model.html
 
+import os
+
 from cobra import Metabolite, Model, Reaction
+from cobra.io import write_sbml_model
+
+TESTFILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 model = Model("example_model")
 
@@ -43,3 +48,6 @@ reaction.gene_reaction_rule = "( STM2378 or STM1197 )"
 model.add_reactions([reaction])
 
 model.objective = "R_3OAS140"
+
+# Save the model to a file
+write_sbml_model(model, os.path.join(TESTFILE_DIR, "example_model.xml"))
