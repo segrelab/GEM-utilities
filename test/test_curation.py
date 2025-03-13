@@ -96,7 +96,7 @@ class TestCuration(unittest.TestCase):
         template_rxn_db = {rxn["id"]: rxn for rxn in rxn_db if not rxn["is_obsolete"]}
         template_met_db = {met["id"]: met for met in met_db if not met["is_obsolete"]}
 
-        # Create a new reaction
+        # Create a new reaction and add it to a new model object
         new_model = curation.add_ms_reaction_from_id(
             model, template_rxn_db, template_met_db, "rxn00001", "c0"
         )
@@ -136,24 +136,31 @@ class TestCuration(unittest.TestCase):
         template_rxn_db = {rxn["id"]: rxn for rxn in rxn_db if not rxn["is_obsolete"]}
         template_met_db = {met["id"]: met for met in met_db if not met["is_obsolete"]}
 
-        # Create a new reaction
+        # Create a new reaction and add it to the model
         # TODO: Check that transport reactions are normally called _c0 reactions
-        new_rxn, new_mets = curation.create_cobra_reaction(
-            model, template_rxn_db, template_met_db, "rxn05145", "c0"
+        new_model = curation.add_ms_reaction_from_id(
+            model, template_rxn_db, template_met_db, "rxn05145", "c", "c", "e"
         )
-        # Add the new reaction to the model
-        model.add_reactions([new_rxn])
-        model.add_metabolites(new_mets)
+
         # Check that the reaction was added
-        self.assertIn("rxn05145_c0", [rxn.id for rxn in model.reactions])
+        # I.e. that it wasn't in the original model, but is in the new model
+        self.assertTrue(
+            ("rxn05145_c" in [rxn.id for rxn in new_model.reactions])
+            and ("rxn05145_c" not in [rxn.id for rxn in model.reactions])
+        )
 
         # Check that the external metabolites were added
+        self.assertIn("cpd00009_e", [met.id for met in new_model.metabolites])
 
         # Check that the corresponding exchange reactions were added
+        self.assertTrue(
+            ("EX_cpd00009_e" in [rxn.id for rxn in new_model.reactions])
+            and ("EX_cpd00009_e" not in [rxn.id for rxn in model.reactions])
+        )
 
         # Save the model to a temporary file
         with tempfile.NamedTemporaryFile(suffix=".xml") as temp_file:
-            cobra.io.write_sbml_model(model, temp_file.name)
+            cobra.io.write_sbml_model(new_model, temp_file.name)
             # Check that the model file is valid SBML
             results = cobra.io.validate_sbml_model(temp_file.name)
             errors = results[1]["SBML_ERROR"]

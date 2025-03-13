@@ -65,6 +65,7 @@ def add_ms_reaction_from_id(
     modelseed_cpd_db: dict,
     rxn_id: str,
     rxn_compartment: str = "c0",
+    internal_compartment: str = "c0",
     external_compartment: str = "e0",
 ) -> cobra.Model:
     """
@@ -77,6 +78,7 @@ def add_ms_reaction_from_id(
         modelseed_cpd_db (dict): Dictionary of ModelSEED compound entries.
         rxn_id (str): Reaction ID to add.
         rxn_compartment (str): Compartment code for the reaction.
+        internal_compartment (str): Compartment code for internal metabolites. Default is "c0".
         external_compartment (str): Compartment code for external metabolites. Default is "e0".
 
     Returns:
@@ -111,9 +113,9 @@ def add_ms_reaction_from_id(
         comp_code = parts[2]
         # Map compartment code to tag
         if comp_code == "0":
-            compartment = "c0"
+            compartment = internal_compartment
         elif comp_code == "1":
-            compartment = "e0"
+            compartment = external_compartment
         else:
             compartment = comp_code
         met_id = f"{met_id_base}_{compartment}"
