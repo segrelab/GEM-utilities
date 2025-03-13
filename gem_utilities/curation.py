@@ -64,7 +64,7 @@ def create_cobra_reaction(
     modelseed_rxn_db: dict,
     modelseed_cpd_db: dict,
     rxn_id: str,
-    compartment: str,
+    compartment: str = "c0",
 ) -> tuple:
     """
     Create a COBRApy Reaction object from a ModelSEED database entry.
@@ -82,9 +82,7 @@ def create_cobra_reaction(
     """
     rxn = modelseed_rxn_db[rxn_id]
     # TODO: Check if the reaction is a transport reaction and handle it accordingly
-    reaction_id = (
-        rxn["id"] + "_c0"
-    )  # Assume cytosolic compartment  # FIXME: Hardcoded compartment
+    reaction_id = rxn["id"] + "_" + compartment
     reaction = cobra.Reaction(reaction_id, name=rxn["name"])
     mets_to_add = []
     # Set reaction bounds based on reversibility
