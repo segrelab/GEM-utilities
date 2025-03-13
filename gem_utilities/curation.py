@@ -60,7 +60,11 @@ def process_intervention(
 
 
 def create_cobra_reaction(
-    model: cobra.Model, modelseed_rxn_db: dict, modelseed_cpd_db: dict, rxn_id: str
+    model: cobra.Model,
+    modelseed_rxn_db: dict,
+    modelseed_cpd_db: dict,
+    rxn_id: str,
+    compartment: str,
 ) -> tuple:
     """
     Create a COBRApy Reaction object from a ModelSEED database entry.
@@ -70,6 +74,7 @@ def create_cobra_reaction(
         modelseed_rxn_db (dict): Dictionary of ModelSEED reaction entries.
         modelseed_cpd_db (dict): Dictionary of ModelSEED compound entries.
         rxn_id (str): Reaction ID to add.
+        compartment (str): Compartment code for the reaction.
 
     Returns:
         cobra.Reaction: The created reaction.
@@ -111,7 +116,9 @@ def create_cobra_reaction(
         # Add metabolite if not present
         # TODO: Make the metabolite more detailed (e.g. add formula, charge, etc.)
         if met_id not in model.metabolites:
-            met_obj = create_cobra_metabolite(modelseed_cpd_db, met_id_base, compartment)
+            met_obj = create_cobra_metabolite(
+                modelseed_cpd_db, met_id_base, compartment
+            )
             mets_to_add.append(met_obj)
         else:
             met_obj = model.metabolites.get_by_id(met_id)
