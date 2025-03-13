@@ -50,4 +50,4 @@ model.add_reactions([reaction])
 model.objective = "R_3OAS140"
 
 # Save the model to a file
-write_sbml_model(model, os.path.join(TESTFILE_DIR, "example_model.xml"))
+write_sbml_model(model, os.path.join(TESTFILE_DIR, "test_model.xml"))

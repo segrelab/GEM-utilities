@@ -56,8 +56,8 @@
       </fbc:objective>
     </fbc:listOfObjectives>
     <fbc:listOfGeneProducts>
-      <fbc:geneProduct fbc:id="G_STM2378" fbc:name="G_STM2378" fbc:label="G_STM2378"/>
       <fbc:geneProduct fbc:id="G_STM1197" fbc:name="G_STM1197" fbc:label="G_STM1197"/>
+      <fbc:geneProduct fbc:id="G_STM2378" fbc:name="G_STM2378" fbc:label="G_STM2378"/>
     </fbc:listOfGeneProducts>
   </model>
 </sbml>
