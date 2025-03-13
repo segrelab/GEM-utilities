@@ -59,27 +59,33 @@ def process_intervention(
     return model_new
 
 
-def create_cobra_reaction(
-    model: cobra.Model,
+def add_ms_reaction_from_id(
+    model_original: cobra.Model,
     modelseed_rxn_db: dict,
     modelseed_cpd_db: dict,
     rxn_id: str,
-    compartment: str = "c0",
-) -> tuple:
+    rxn_compartment: str = "c0",
+    external_compartment: str = "e0",
+) -> cobra.model:
     """
-    Create a COBRApy Reaction object from a ModelSEED database entry.
+    Create a COBRApy Reaction object (and any new metabolites) from a ModelSEED
+    database entry and add it to a model.
 
     Parameters:
-        model (cobra.Model): Model to which the reaction and new metabolites will be added.
+        model_original (cobra.Model): Model to which the reaction and new metabolites will be added.
         modelseed_rxn_db (dict): Dictionary of ModelSEED reaction entries.
         modelseed_cpd_db (dict): Dictionary of ModelSEED compound entries.
         rxn_id (str): Reaction ID to add.
-        compartment (str): Compartment code for the reaction.
+        rxn_compartment (str): Compartment code for the reaction.
+        external_compartment (str): Compartment code for external metabolites. Default is "e0".
 
     Returns:
         cobra.Reaction: The created reaction.
         list: List of new metabolites added to the model.
     """
+    # Make a copy of the model to edit
+    model = model_original.copy()
+    # Get the reaction entry from the modelSEED database
     rxn = modelseed_rxn_db[rxn_id]
     # TODO: Check if the reaction is a transport reaction and handle it accordingly
     reaction_id = rxn["id"] + "_" + compartment
@@ -121,8 +127,22 @@ def create_cobra_reaction(
         else:
             met_obj = model.metabolites.get_by_id(met_id)
         reaction.add_metabolites({met_obj: coeff})
+    # Add the reaction to the model
     model.add_reactions([reaction])
-    return reaction, mets_to_add
+    # Add the new metabolites to the model
+    model.add_metabolites(mets_to_add)
+    # Handle tranport reactions: Add corresponding exchange reactions
+    if rxn["is_transport"]:
+        # Get all of the external metabolites that have been added
+        external_mets = [
+            met for met in mets_to_add if met.compartment == external_compartment
+        ]
+        # Add exchange reactions for each external metabolite
+        # Set the lower bound to 0 to allow only for release
+        for met in external_mets:
+            model.add_boundary(met, type="exchange", lb=0, ub=1000)
+    # Return the model
+    return model
 
 
 def create_cobra_metabolite(
