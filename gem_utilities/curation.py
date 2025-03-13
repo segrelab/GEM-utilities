@@ -59,7 +59,7 @@ def process_intervention(
     return model_new
 
 
-def create_cobra_reaction(model, modelseed_db, rxn_id):
+def create_cobra_reaction(model: cobra.Model, modelseed_db: dict, rxn_id: str) -> tuple:
     """
     Create a COBRApy Reaction object from a ModelSEED database entry.
 
