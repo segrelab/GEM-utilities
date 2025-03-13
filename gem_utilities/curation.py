@@ -4,7 +4,7 @@ import cobra
 import pandas as pd
 
 
-def process_intervention(
+def process_intervention_df(
     model: cobra.Model, df: pd.DataFrame, template_rxn_db: dict
 ) -> cobra.Model:
     """
