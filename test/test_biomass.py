@@ -1,8 +1,12 @@
+import os
 import unittest
+from io import StringIO
 
+import cobra
+import pandas as pd
 from cobra import Metabolite, Model, Reaction
 
-from gem_utilities.biomass import unlump_biomass
+from gem_utilities.biomass import test_biomass_producibility, unlump_biomass
 
 
 class TestUnlumpBiomass(unittest.TestCase):
@@ -40,6 +44,59 @@ class TestUnlumpBiomass(unittest.TestCase):
 
         # Check if the result matches the expected output
         self.assertEqual(sorted(result), sorted(expected_unlumped))
+
+
+class TestBiomassComponentProducibility(unittest.TestCase):
+    def setUp(self):
+        # Make a simple growth phenotypes dataframe
+        phenotypes_csv = """
+minimal_media,c_source,met_id,growth
+minimal,control,,No
+minimal,glucose,glc__D,Yes
+minimal,acetate,ac,Yes
+        """
+
+        # Use StringIO to simulate a file
+        self.phenotypes_df = pd.read_csv(StringIO(phenotypes_csv.strip()))
+
+        # Define the minimal media
+        self.media_definitions = {
+            "minimal": {
+                "EX_co2_e": 1000.0,
+                "EX_h_e": 1000.0,
+                "EX_h2o_e": 1000.0,
+                "EX_nh4_e": 1000.0,
+                "EX_o2_e": 1000.0,
+                "EX_pi_e": 1000.0,
+            }
+        }
+
+    def test_biomass_producibility(self):
+        """Test the test_biomass_producibility function using the E. coli core
+        model and a simple media definition"""
+        model = cobra.io.load_model("textbook")
+        test_biomass_producibility(
+            model,
+            self.phenotypes_df,
+            self.media_definitions,
+            biomass_rxn="Biomass_Ecoli_core",
+            external_compartment="e",
+            lumped_biomass_components=None,
+        )
+
+        # Compare the resulting CSV file with the expected output
+        expected_csv = pd.read_csv(
+            "test/test_files/e_coli_core_biomass_producibility.csv"
+        )
+        result_csv = pd.read_csv("e_coli_core_biomass_producibility.csv")
+        pd.testing.assert_frame_equal(expected_csv, result_csv)
+
+    def tearDown(self):
+        # Clean up the test files
+        if os.path.exists("e_coli_core_biomass_producibility_heatmap.png"):
+            os.remove("e_coli_core_biomass_producibility_heatmap.png")
+        if os.path.exists("e_coli_core_biomass_producibility.csv"):
+            os.remove("e_coli_core_biomass_producibility.csv")
 
 
 if __name__ == "__main__":

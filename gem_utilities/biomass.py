@@ -59,7 +59,13 @@ def unlump_biomass(
 
 
 def test_biomass_producibility(
-    model, growth_phenotypes, media_definitions, biomass_rxn="bio1_biomass", out_dir="."
+    model,
+    growth_phenotypes,
+    media_definitions,
+    biomass_rxn="bio1_biomass",
+    external_compartment="e0",
+    lumped_biomass_components=["cpd11461_c0", "cpd11463_c0", "cpd11462_c0"],
+    out_dir=".",
 ) -> None:
     """
     Add exchange reactions for all metabolites in the model and test the producibility of the biomass components on the given media
@@ -69,6 +75,8 @@ def test_biomass_producibility(
     growth_phenotypes (pandas.DataFrame): A dataframe with columns "minimal_media", "c_source", "met_id", and "growth"
     media_definitions (dict): A dictionary of media definitions
     biomass_rxn (str): The ID of the biomass reaction in the model. Default is "bio1_biomass" (which is used in KBase models).
+    lumped_biomass_components (list): List of metabolites that are lumped in the biomass reaction (defaults to
+        ['cpd11461_c0', 'cpd11463_c0', 'cpd11462_c0'] which is DNA, protein, and RNA respectively)
     out_dir (str): The directory to save the results to. Default is the current directory.
 
     Returns:
@@ -98,7 +106,10 @@ def test_biomass_producibility(
 
     # "Un-lump" the biomass so that any lumped biomass component (e.g. DNA) is
     # separated into its constituent metabolites (e.g. dAMP, dCMP, dGMP, dTMP)
-    unlumped_compounds = unlump_biomass(model, biomass_compounds)
+    if lumped_biomass_components:
+        unlumped_compounds = unlump_biomass(model, biomass_compounds)
+    else:
+        unlumped_compounds = biomass_compounds
 
     # Make a dictionary to store the producibility results
     biomass_producibility = {}
@@ -111,9 +122,10 @@ def test_biomass_producibility(
         biomass_producibility[c_source] = {}
         # Set the model media to match the experimental media
         medium = media_definitions[row["minimal_media"]].copy()
-        medium["EX_" + row["met_id"] + "_e0"] = (
-            1000.0  # FIXME: I should set this to a consistent, lower value
-        )
+        if not pd.isna(row["met_id"]):
+            medium["EX_" + row["met_id"] + "_" + external_compartment] = (
+                1000.0  # FIXME: I should set this to a consistent, lower value
+            )
         # Test it
         biomass_producibility[c_source] = try_biomass_in_one_medium(
             medium, unlumped_compounds, model
