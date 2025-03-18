@@ -58,7 +58,7 @@ def unlump_biomass(
     return unlumped_compounds
 
 
-def test_biomass_producibility(
+def check_biomass_producibility(
     model,
     growth_phenotypes,
     media_definitions,

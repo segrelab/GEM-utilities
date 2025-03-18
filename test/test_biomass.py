@@ -6,7 +6,7 @@ import cobra
 import pandas as pd
 from cobra import Metabolite, Model, Reaction
 
-from gem_utilities.biomass import test_biomass_producibility, unlump_biomass
+from gem_utilities.biomass import check_biomass_producibility, unlump_biomass
 
 
 class TestUnlumpBiomass(unittest.TestCase):
@@ -75,7 +75,7 @@ minimal,acetate,ac,Yes
         """Test the test_biomass_producibility function using the E. coli core
         model and a simple media definition"""
         model = cobra.io.load_model("textbook")
-        test_biomass_producibility(
+        check_biomass_producibility(
             model,
             self.phenotypes_df,
             self.media_definitions,
