@@ -69,3 +69,8 @@ class TestBuildReactionString(unittest.TestCase):
 
         # Assert that the reaction string is correct
         self.assertEqual(reaction_string, '1.0 D-Glucose <--> ')
+
+        # Use a reaction that is irreversible
+        reaction = model.reactions.get_by_id('ATPM')
+        reaction_string = names.build_reaction_string(reaction)
+        self.assertEqual(reaction_string, '1.0 ATP + 1.0 H2O --> 1.0 ADP + 1.0 H+ + 1.0 Phosphate')
