@@ -5,7 +5,20 @@ import requests
 
 
 # Function to get KO numbers for a KEGG reaction ID using the KEGG API
-def get_ko_for_kegg_reaction(kegg_reaction_id):
+def get_ko_for_kegg_reaction(kegg_reaction_id: str) -> list:
+    """
+    Get the list of KEGG ortholog (KO) numbers for a given KEGG reaction ID.
+
+    Parameters
+    ----------
+    kegg_reaction_id : str
+        KEGG reaction ID to get KO numbers for.
+
+    Returns
+    -------
+    list
+        List of KO numbers associated with the KEGG reaction ID.
+    """
     # Remove 'R' prefix if present in a format like "R00001"
     if kegg_reaction_id.startswith("R"):
         kegg_id = kegg_reaction_id
@@ -24,7 +37,8 @@ def get_ko_for_kegg_reaction(kegg_reaction_id):
                     parts = line.split("\t")
                     if len(parts) > 1:
                         ko = parts[1]
-                        ko_list.append(ko)
+                        ko_id = ko.split(":")[1]
+                        ko_list.append(ko_id)
             return ko_list
         else:
             return []
