@@ -3,7 +3,7 @@ import tempfile
 import filecmp
 import os
 
-from cobra.io import read_sbml_model, write_sbml_model
+from cobra.io import read_sbml_model, load_model
 
 from gem_utilities import names
 
@@ -53,3 +53,24 @@ class TestNames(unittest.TestCase):
         # the compartment suffix
         self.assertEqual(model.metabolites.get_by_id('gln__L_e').name,
                          'L-Glutamine')
+
+
+class TestBuildReactionString(unittest.TestCase):
+    def test_build_reaction_string(self):
+        """Test build_reaction_string function."""
+        # Read in the E coli core model
+        model = load_model("textbook")
+
+        # Find a reaction
+        reaction = model.reactions.get_by_id('EX_glc__D_e')
+
+        # Build the reaction string
+        reaction_string = names.build_reaction_string(reaction)
+
+        # Assert that the reaction string is correct
+        self.assertEqual(reaction_string, '1.0 D-Glucose <--> ')
+
+        # Use a reaction that is irreversible
+        reaction = model.reactions.get_by_id('ATPM')
+        reaction_string = names.build_reaction_string(reaction)
+        self.assertEqual(reaction_string, '1.0 ATP + 1.0 H2O --> 1.0 ADP + 1.0 H+ + 1.0 Phosphate')
