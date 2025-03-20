@@ -50,7 +50,23 @@ def get_ko_for_kegg_reaction(kegg_reaction_id: str) -> list:
         time.sleep(0.5)
 
 
-def add_kos_to_model(model: cobra.Model, verbose: bool = False):
+def add_kos_to_model(model: cobra.Model, verbose: bool = False) -> cobra.Model:
+    """
+    Takes a COBRApy model and adds KO numbers to each reactions' annotation
+    field based on the KEGG reaction in the annotation.
+
+    Parameters
+    ----------
+    model : cobra.Model
+        Model to add KO numbers to.
+    verbose : bool, optional
+        Print additional information, by default False
+
+    Returns
+    -------
+    cobra.Model
+        Model with KO numbers added to the annotation field of reactions.
+    """
     # Make a copy of the model to avoid modifying the original model
     working_model = model.copy()
     # List to store reactions without KEGG annotations
@@ -86,10 +102,11 @@ def add_kos_to_model(model: cobra.Model, verbose: bool = False):
 
             # Add unique KO numbers to reaction annotation
             if ko_numbers:
-                reaction.annotation["ko"] = list(set(ko_numbers))
-                print(
-                    f"Added KO numbers for {reaction.id}: {reaction.annotation['ko']}"
-                )
+                reaction.annotation["kegg.orthology"] = list(set(ko_numbers))
+                if verbose:
+                    print(
+                        f"Added KO numbers for {reaction.id}: {reaction.annotation['kegg.orthology']}"
+                    )
         else:
             reactions_without_kegg.append(reaction.id)
 
