@@ -1590,8 +1590,18 @@ def combinations(items, r):
     return result
 
 
-def download_kegg_pathways(output_dir, pathway_ids=None):
-    """Download KEGG pathway KGML and PNG files."""
+def download_kegg_pathways(output_dir: str, pathway_ids=None):
+    """
+    Download KEGG pathways as KGML and image files.
+
+    Parameters
+    ----------
+    output_dir : str
+        Path to the output directory in which pathway files are saved.
+    pathway_ids : list, optional
+        List of pathway IDs to download the maps for, by default None, which
+        downloads all pathways.
+    """
     os.makedirs(output_dir, exist_ok=True)
 
     # If no specific pathway IDs are provided, get all pathway IDs
