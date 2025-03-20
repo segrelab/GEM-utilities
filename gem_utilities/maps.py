@@ -13,6 +13,7 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import requests
 
 # Define qualitative and repeating colormaps for consistent use with keggmapping.py
 qualitative_colormaps: List[str] = [
@@ -1587,3 +1588,41 @@ def combinations(items, r):
         for combo in combinations(items[i + 1 :], r - 1):
             result.append((item,) + combo)
     return result
+
+
+def download_kegg_pathways(output_dir, pathway_ids=None):
+    """Download KEGG pathway KGML and PNG files."""
+    os.makedirs(output_dir, exist_ok=True)
+
+    # If no specific pathway IDs are provided, get all pathway IDs
+    if pathway_ids is None:
+        response = requests.get("https://rest.kegg.jp/list/pathway")
+        pathway_ids = [
+            line.split("\t")[0][5:] for line in response.text.strip().split("\n")
+        ]
+
+    # Create directory structure
+    kgml_dir = os.path.join(output_dir, "kgml")
+    image_dir = os.path.join(output_dir, "image")
+    os.makedirs(kgml_dir, exist_ok=True)
+    os.makedirs(image_dir, exist_ok=True)
+
+    for pathway_id in pathway_ids:
+        print(f"Downloading {pathway_id}...")
+
+        # Get KGML
+        kgml_response = requests.get(f"https://rest.kegg.jp/get/ko{pathway_id}/kgml")
+        if kgml_response.status_code == 200:
+            with open(os.path.join(kgml_dir, f"ko{pathway_id}.xml"), "w") as f:
+                f.write(kgml_response.text)
+
+        # Get pathway image
+        img_response = requests.get(f"https://rest.kegg.jp/get/ko{pathway_id}/image")
+        if img_response.status_code == 200:
+            with open(os.path.join(image_dir, f"ko{pathway_id}.png"), "wb") as f:
+                f.write(img_response.content)
+
+        # Be nice to the server - add a delay between requests
+        import time
+
+        time.sleep(1)
