@@ -7,7 +7,6 @@ import shutil
 import time
 from typing import Dict, Iterable, List, Literal, Optional, Set, Tuple, Union
 
-from Bio.KEGG.KGML.KGML_parser import read
 import cobra
 import fitz  # PyMuPDF
 import matplotlib as mpl
@@ -16,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
+from Bio.KEGG.KGML.KGML_parser import read
 
 # Define qualitative and repeating colormaps for consistent use with keggmapping.py
 qualitative_colormaps: List[str] = [
@@ -782,7 +782,7 @@ class Mapper:
         if not os.path.exists(file_path):
             print(f"WARNING: Pathway map file not found for pathway number '{pathway_number}'")
             return None
-        
+
         # Load the KGML file and return the pathway object using BioPython
         pathway = read(file_path)
 
