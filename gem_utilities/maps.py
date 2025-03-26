@@ -4,6 +4,7 @@ import math
 import os
 import re
 import shutil
+import time
 from typing import Dict, Iterable, List, Literal, Optional, Set, Tuple, Union
 
 import cobra
@@ -1608,7 +1609,7 @@ def download_kegg_pathways(output_dir: str, pathway_ids=None):
     if pathway_ids is None:
         response = requests.get("https://rest.kegg.jp/list/pathway")
         pathway_ids = [
-            line.split("\t")[0][5:] for line in response.text.strip().split("\n")
+            line.split("\t")[0][3:] for line in response.text.strip().split("\n")
         ]
 
     # Create directory structure
@@ -1633,6 +1634,4 @@ def download_kegg_pathways(output_dir: str, pathway_ids=None):
                 f.write(img_response.content)
 
         # Be nice to the server - add a delay between requests
-        import time
-
         time.sleep(1)
