@@ -7,6 +7,7 @@ import shutil
 import time
 from typing import Dict, Iterable, List, Literal, Optional, Set, Tuple, Union
 
+from Bio.KEGG.KGML.KGML_parser import read
 import cobra
 import fitz  # PyMuPDF
 import matplotlib as mpl
@@ -108,7 +109,6 @@ class Mapper:
         # Initialize drawers for colorbars and grids
         self.colorbar_drawer = ColorbarDrawer(overwrite_output=overwrite_output)
         self.grid_drawer = PDFGridDrawer(overwrite_output=overwrite_output)
-
 
 
     def map_model_kos(
@@ -543,7 +543,7 @@ class Mapper:
         # 3. Coloring those reactions
         # 4. Drawing the map
 
-        # Simplified placeholder implementation
+        # Load the KGML file
         pathway = self._get_pathway(pathway_number)
         if pathway is None:
             return False
@@ -775,39 +775,19 @@ class Mapper:
         object
             Representation of the KGML file as an object.
         """
-        # Check if the pathway exists
-        is_global_map = False
-        is_overview_map = False
+        # Combine the pathway number with the KEGG directory to get the KGML file
+        file_path = os.path.join(self.kegg_dir, f"ko{pathway_number}.xml")
 
-        # Global maps are typically 01xxx, overview maps are 11xx
-        if re.match(r"01\d{3}", pathway_number):
-            is_global_map = True
-        elif re.match(r"11\d{2}", pathway_number):
-            is_overview_map = True
-
-        # Choose the appropriate KGML file
-        if is_global_map:
-            kgml_path = os.path.join(self.kgml_1x_ko_dir, f"ko{pathway_number}.xml")
-        else:
-            kgml_path = os.path.join(self.kgml_2x_ko_dir, f"ko{pathway_number}.xml")
-
-        if not os.path.exists(kgml_path):
-            print(
-                f"WARNING: KGML file not found for pathway {pathway_number} at {kgml_path}"
-            )
+        # Check that the file exists, if it does not throw an error
+        if not os.path.exists(file_path):
+            print(f"WARNING: Pathway map file not found for pathway number '{pathway_number}'")
             return None
-
-        # Simplified pathway object for the example - in a real implementation,
-        # this would parse the KGML file and return a proper pathway object
-        # You would use a library like BioPython's KGML parser or implement your own parser
-        pathway = {
-            "number": pathway_number,
-            "kgml_path": kgml_path,
-            "is_global_map": is_global_map,
-            "is_overview_map": is_overview_map,
-        }
+        
+        # Load the KGML file and return the pathway object using BioPython
+        pathway = read(file_path)
 
         return pathway
+
 
     def _pathway_has_kos(self, pathway, ko_ids: Iterable[str]) -> bool:
         """
