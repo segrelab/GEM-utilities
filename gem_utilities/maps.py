@@ -96,9 +96,7 @@ class Mapper:
             hierarchy of maps (see https://www.genome.jp/brite/br08901).
         """
         self.model = model
-        self.kegg_dir = kegg_dir or self._get_default_kegg_dir()
-
-        self._setup_kegg_data()
+        self.kegg_dir = kegg_dir
 
         self.overwrite_output = overwrite_output
         self.name_files = name_files
@@ -111,74 +109,7 @@ class Mapper:
         self.colorbar_drawer = ColorbarDrawer(overwrite_output=overwrite_output)
         self.grid_drawer = PDFGridDrawer(overwrite_output=overwrite_output)
 
-    def _get_default_kegg_dir(self) -> str:
-        """
-        Get the default KEGG data directory.
 
-        Returns
-        =======
-        str
-            Path to the default KEGG data directory.
-        """
-        # Common locations for KEGG data
-        possible_dirs = [
-            os.path.expanduser("~/.kegg"),
-            os.path.expanduser("~/kegg_data"),
-            "/usr/local/share/kegg",
-            "/usr/share/kegg",
-        ]
-
-        for d in possible_dirs:
-            if os.path.exists(d):
-                return d
-
-        # If no directories found, use current directory and warn user
-        print(
-            f"WARNING: No KEGG data directory found. Using current directory. You may need to set up KEGG data."
-        )
-        return os.getcwd()
-
-    def _setup_kegg_data(self):
-        """Set up KEGG data paths and load required files."""
-        self.kegg_pathway_list_file = os.path.join(
-            self.kegg_dir, "pathway", "pathway.list"
-        )
-        self.kegg_map_image_kgml_file = os.path.join(
-            self.kegg_dir, "pathway", "map_image_kgml.tsv"
-        )
-        self.kegg_brite_pathways_file = os.path.join(
-            self.kegg_dir, "brite", "br08901.json"
-        )
-
-        self.kgml_1x_ko_dir = os.path.join(self.kegg_dir, "kgml", "1x", "ko")
-        self.kgml_2x_ko_dir = os.path.join(self.kegg_dir, "kgml", "2x", "ko")
-
-        # Load available pathway numbers
-        self.available_pathway_numbers: List[str] = []
-        if os.path.exists(self.kegg_map_image_kgml_file):
-            for row in pd.read_csv(
-                self.kegg_map_image_kgml_file, sep="\t", index_col=0
-            ).itertuples():
-                if row.KO + row.EC + row.RN == 0:
-                    continue
-                self.available_pathway_numbers.append(row.Index[-5:])
-        else:
-            print(
-                f"WARNING: KEGG map image/KGML file not found at {self.kegg_map_image_kgml_file}"
-            )
-            self.available_pathway_numbers = []
-
-        # Load pathway names
-        self.pathway_names: Dict[str, str] = {}
-        if os.path.exists(self.kegg_pathway_list_file):
-            for pathway_number, pathway_name in pd.read_csv(
-                self.kegg_pathway_list_file, sep="\t", header=None
-            ).itertuples(index=False):
-                self.pathway_names[pathway_number[3:]] = pathway_name
-        else:
-            print(
-                f"WARNING: KEGG pathway list file not found at {self.kegg_pathway_list_file}"
-            )
 
     def map_model_kos(
         self,
@@ -545,7 +476,7 @@ class Mapper:
             False.
         """
         # Find the numeric IDs of the maps to draw.
-        pathway_numbers = self._find_maps(output_dir, "kos", patterns=pathway_numbers)
+        # pathway_numbers = self._find_maps(output_dir, "kos", patterns=pathway_numbers)
 
         os.makedirs(output_dir, exist_ok=True)
 
