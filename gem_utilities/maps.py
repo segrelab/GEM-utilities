@@ -10,12 +10,29 @@ from Bio.KEGG.REST import kegg_get
 
 def map_ko_ids(
     pathway_id: str,
-    ko_ids=List[str],
+    ko_ids: List[str],
     color="#BFBFFF",
-    kgml_folder=None,
+    kgml_folder=".",
     output_folder=".",
 ):
-    """Render a KEGG pathway with highlighted KO identifiers, save as a PDF and a PNG."""
+    """
+    Render a KEGG pathway map with specified KO identifiers hihglighted in the
+    given color, save as a PDF and a PNG.
+
+    Parameters
+    ----------
+    pathway_id : str
+        Pathway ID (e.g. "ko00061")
+    ko_ids : _type_, List[str]
+        List of KEGG Ortholog IDs to highlight on the map
+        (e.g. ["K00665", "K00668"])
+    color : str, optional
+        Hex code for color to highlight the KOs with, by default "#BFBFFF"
+    kgml_folder : str, optional
+        Path to look for and/or save KGML files, by default '.'
+    output_folder : str, optional
+        Path of folder to save resulting PDFs and PNGs, by default "."
+    """
     # If the pathway's KGML file is not already downloaded, download it
     if not os.path.exists(os.path.join(kgml_folder, pathway_id + ".xml")):
         with open(os.path.join(kgml_folder, pathway_id + ".xml"), "w") as f:
