@@ -1,3 +1,6 @@
 cobra
 matplotlib
 seaborn
+PyMuPDF
+biopython
+requests
