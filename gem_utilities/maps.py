@@ -56,9 +56,13 @@ def map_ko_ids(
     # Render the map
     canvas = KGMLCanvas(pathway, import_imagemap=True)
 
+    # Get the title of the pathway, and clean it up for the filename
+    clean_title = pathway.title.replace(" ", "-").lower()
+    out_name = pathway_id + "_" + clean_title
+
     # Save the file as a PDF and convert it to a PNG
-    canvas.draw(os.path.join(output_folder, pathway_id + ".pdf"))
-    os.system("convert {0}.pdf {0}.png".format(os.path.join(output_folder, pathway_id)))
+    canvas.draw(os.path.join(output_folder, out_name + ".pdf"))
+    os.system("convert {0}.pdf {0}.png".format(os.path.join(output_folder, out_name)))
 
 
 def download_kegg_pathways(output_dir: str, pathway_ids=None):
