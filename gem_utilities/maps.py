@@ -57,7 +57,10 @@ def map_ko_ids(
     canvas = KGMLCanvas(pathway, import_imagemap=True)
 
     # Get the title of the pathway, and clean it up for the filename
-    clean_title = pathway.title.replace(" ", "-").lower()
+    clean_title = pathway.title.replace(" ", "-")
+    for char in ["/", "(", ")"]:
+        clean_title = clean_title.replace(char, "")
+    clean_title = clean_title.lower()
     out_name = pathway_id + "_" + clean_title
 
     # Save the file as a PDF and convert it to a PNG
