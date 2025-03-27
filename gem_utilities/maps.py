@@ -1,7 +1,47 @@
 import os
 import time
+from typing import List
 
 import requests
+from Bio.Graphics.KGML_vis import KGMLCanvas
+from Bio.KEGG.KGML import KGML_parser
+from Bio.KEGG.REST import kegg_get
+
+
+def map_ko_ids(
+    pathway_id: str,
+    ko_ids=List[str],
+    color="#BFBFFF",
+    kgml_folder=None,
+    output_folder=".",
+):
+    """Render a KEGG pathway with highlighted KO identifiers, save as a PDF and a PNG."""
+    # If the pathway's KGML file is not already downloaded, download it
+    if not os.path.exists(os.path.join(kgml_folder, pathway_id + ".xml")):
+        with open(os.path.join(kgml_folder, pathway_id + ".xml"), "w") as f:
+            f.write(kegg_get(pathway_id, "kgml").read())
+
+    # Get the path to the KGML file
+    file_path = os.path.join(kgml_folder, pathway_id + ".xml")
+
+    # Read the KGML file
+    with open(file_path, "r") as f:
+        pathway = KGML_parser.read(f)
+
+    # Make all squares white, except for the ones with the KO identifiers
+    for element in pathway.orthologs:
+        for graphic in element.graphics:
+            if graphic.name in ko_ids:
+                graphic.bgcolor = color
+            else:
+                graphic.bgcolor = "#FFFFFF"
+
+    # Render the map
+    canvas = KGMLCanvas(pathway, import_imagemap=True)
+
+    # Save the file as a PDF and convert it to a PNG
+    canvas.draw(os.path.join(output_folder, pathway_id + ".pdf"))
+    os.system("convert {0}.pdf {0}.png".format(os.path.join(output_folder, pathway_id)))
 
 
 def download_kegg_pathways(output_dir: str, pathway_ids=None):
