@@ -16,7 +16,7 @@ def map_ko_ids(
     output_folder=".",
 ):
     """
-    Render a KEGG pathway map with specified KO identifiers hihglighted in the
+    Render a KEGG pathway map with specified KO identifiers highlighted in the
     given color, save as a PDF and a PNG.
 
     Parameters
