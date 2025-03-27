@@ -47,10 +47,15 @@ def map_ko_ids(
 
     # Make all squares white, except for the ones with the KO identifiers
     for element in pathway.orthologs:
-        for graphic in element.graphics:
-            if graphic.name in ko_ids:
+        # Clean up the list of orthologs associated with each element
+        element_orthologs = set(p.split("ko:")[1] for p in element._names)
+        # See if there are any orthologs from the element present in the
+        # supplied list to color
+        if element_orthologs & ko_ids:
+            for graphic in element.graphics:
                 graphic.bgcolor = color
-            else:
+        else:
+            for graphic in element.graphics:
                 graphic.bgcolor = "#FFFFFF"
 
     # Render the map
