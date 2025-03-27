@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
-from Bio.KEGG.KGML.KGML_parser import read
+from Bio.KEGG.KGML import KGML_parser
+from Bio.Graphics.KGML_vis import KGMLCanvas
 
 # Define qualitative and repeating colormaps for consistent use with keggmapping.py
 qualitative_colormaps: List[str] = [
@@ -548,9 +549,27 @@ class Mapper:
         if pathway is None:
             return False
 
+        # Subset the pathway to get just the KOs present in the model
+        filtered_reactions = []
+        for reaction in pathway.reactions:
+            for ko in ko_ids:
+                if ko in reaction.name:
+                    filtered_reactions.append(reaction)
+                    break
+
+        # Create a new pathway object with filtered reactions
+        filtered_pathway = KGML_parser.Pathway()
+        filtered_pathway.__dict__.update(pathway.__dict__)
+        filtered_pathway.reactions = filtered_reactions
+
+
         # Check if any of the KOs are in the pathway
+        print("Checking if any of the KOs are in the pathway")
+
+        # FIXME: This doesn't actually filter anything out, actually need to
+        # implement the logic in "_pathway_has_kos"
         has_kos = self._pathway_has_kos(pathway, ko_ids)
-        if not has_kos and not draw_maps_lacking_kos:
+        if not has_kos and not draw_map_lacking_kos:
             return False
 
         # Draw the map
@@ -661,105 +680,18 @@ class Mapper:
         pathway = self._get_pathway(pathway_number)
         if pathway is None:
             return False
+        
+        # TODO: Filter the KO membership to only include KOs in the pathway
+        print("Filtering KO membership to only include KOs in the pathway")
 
-        # Check if any of the KOs are in the pathway
-        has_kos = self._pathway_has_kos(pathway, ko_membership.keys())
-        if not has_kos and not draw_map_lacking_kos:
-            return False
+
+        # Skip pathway if there are no KOs in the pathway
+        # Unless I have some sort of over-ride
+        # TODO: Implement this logic
 
         # Draw the map with membership-based coloring
         self._draw_map(pathway, output_dir, color_priority)
         return True
-
-    def _find_maps(
-        self, output_dir: str, prefix: str, patterns: List[str] = None
-    ) -> List[str]:
-        """
-        Find the numeric IDs of maps to draw given the file prefix, checking that the map can be
-        drawn in the target output directory.
-
-        Parameters
-        ==========
-        output_dir : str
-            Path to the output directory in which pathway map PDF files are drawn.
-
-        prefix : str
-            Output filenames are formatted as <prefix>_<pathway_number>.pdf or
-            <prefix>_<pathway_number>_<pathway_name>.pdf.
-
-        patterns : List[str], None
-            Regex patterns of pathway numbers, which are five digits.
-
-        Returns
-        =======
-        List[str]
-            List of pathway numbers to draw.
-        """
-        if patterns is None:
-            pathway_numbers = self.available_pathway_numbers
-        else:
-            pathway_numbers = self._get_pathway_numbers_from_patterns(patterns)
-
-        if self.pathway_categorization is not None:
-            missing_pathway_numbers: list[str] = []
-            for pathway_number in pathway_numbers:
-                if pathway_number not in self.pathway_categorization:
-                    missing_pathway_numbers.append(pathway_number)
-            if missing_pathway_numbers:
-                missing_str = ", ".join(f"'{p}'" for p in missing_pathway_numbers)
-                print(f"WARNING: Pathway numbers not in BRITE hierarchy: {missing_str}")
-                print("File categorization cannot be used.")
-                self.categorize_files = False
-                self.pathway_categorization = None
-
-        if not self.overwrite_output:
-            # Check if files would be overwritten
-            for pathway_number in pathway_numbers:
-                pathway_name = (
-                    f"_{self._name_pathway(pathway_number)}" if self.name_files else ""
-                )
-                out_basename = f"{prefix}_{pathway_number}{pathway_name}.pdf"
-                if self.pathway_categorization is None:
-                    out_path = os.path.join(output_dir, out_basename)
-                else:
-                    out_path = os.path.join(
-                        *self.pathway_categorization[pathway_number], out_basename
-                    )
-                if os.path.exists(out_path):
-                    raise ValueError(
-                        f"Output files would be overwritten in {output_dir}. Use overwrite_output=True or delete existing files."
-                    )
-
-        return pathway_numbers
-
-    def _get_pathway_numbers_from_patterns(self, patterns: Iterable[str]) -> List[str]:
-        """
-        Among pathways available in the KEGG data directory, get those with ID numbers matching the
-        given regex patterns.
-
-        Parameters
-        ==========
-        patterns : Iterable[str]
-            Regex patterns of pathway numbers, which are five digits.
-
-        Returns
-        =======
-        List[str]
-            Pathway numbers matching the regex patterns.
-        """
-        pathway_numbers: List[str] = []
-        for pattern in patterns:
-            for available_pathway_number in self.available_pathway_numbers:
-                if re.match(pattern, available_pathway_number):
-                    pathway_numbers.append(available_pathway_number)
-
-        # Maintain the order of pathway numbers recovered from patterns.
-        seen = set()
-        return [
-            pathway_number
-            for pathway_number in pathway_numbers
-            if not (pathway_number in seen or seen.add(pathway_number))
-        ]
 
     def _get_pathway(self, pathway_number: str):
         """
@@ -784,31 +716,11 @@ class Mapper:
             return None
 
         # Load the KGML file and return the pathway object using BioPython
-        pathway = read(file_path)
+        with open(file_path, "r") as f:
+            pathway = KGML_parser.read(f)
 
         return pathway
 
-
-    def _pathway_has_kos(self, pathway, ko_ids: Iterable[str]) -> bool:
-        """
-        Check if a pathway contains any of the specified KO IDs.
-
-        Parameters
-        ==========
-        pathway : object
-            Pathway object.
-
-        ko_ids : Iterable[str]
-            KO IDs to check for.
-
-        Returns
-        =======
-        bool
-            True if the pathway contains any of the KO IDs, False otherwise.
-        """
-        # In a real implementation, this would check the KGML file for the KO IDs
-        # Simplified placeholder implementation
-        return True  # Assume the pathway has the KOs for demonstration purposes
 
     def _draw_map(self, pathway, output_dir: str, color_spec):
         """
@@ -825,141 +737,32 @@ class Mapper:
         color_spec : Union[str, Dict[str, float]]
             Color specification, either a hex code, 'original', or a dictionary mapping colors to priorities.
         """
-        pathway_number = pathway["number"]
-        pathway_name = (
-            f"_{self._name_pathway(pathway_number)}" if self.name_files else ""
-        )
-        out_basename = f"kos_{pathway_number}{pathway_name}.pdf"
+        pathway_number = pathway.number
+        pathway_name = pathway.title.replace(" ", "_").lower()
+        out_basename = f"{pathway_name}_map.pdf"
 
-        if self.pathway_categorization is None:
-            out_dir = output_dir
-            out_path = os.path.join(output_dir, out_basename)
-        else:
-            out_dir = os.path.join(
-                output_dir, *self.pathway_categorization[pathway_number]
-            )
-            out_path = os.path.join(out_dir, out_basename)
+        # Use the downloaded version of the pathway image
+        # FIXME: This is a placeholder path, the actual path would be determined by the pathway object
+        pathway.image = "/Users/helenscott/Documents/PhD/Segre-lab/kegg_data/image/ko00300.png"
+        # Check that the image file exists
+        if not os.path.exists(pathway.image):
+            print(f"WARNING: Pathway image file not found for pathway number '{pathway_number}'")
+            return
 
-        os.makedirs(out_dir, exist_ok=True)
-
-        # In a real implementation, this would draw the map using a library
-        # Here we'll just create a simplified placeholder PDF
-        self._create_placeholder_pdf(out_path, pathway, color_spec)
-
-        if self.pathway_categorization is not None:
-            self._symlink_map(output_dir, out_path)
-
-    def _create_placeholder_pdf(self, out_path: str, pathway, color_spec):
-        """
-        Create a placeholder PDF file for demonstration purposes.
-
-        Parameters
-        ==========
-        out_path : str
-            Path to the output PDF file.
-
-        pathway : object
-            Pathway object.
-
-        color_spec : Union[str, Dict[str, float]]
-            Color specification.
-        """
-        # Create a simple PDF with pathway information
-        fig, ax = plt.subplots(figsize=(8, 6))
-
-        # Display pathway info
-        pathway_number = pathway["number"]
-        pathway_name = self.pathway_names.get(pathway_number, "Unknown pathway")
-
-        ax.text(0.5, 0.8, f"Pathway: {pathway_number}", ha="center", fontsize=14)
-        ax.text(0.5, 0.7, f"Name: {pathway_name}", ha="center", fontsize=12)
-
-        # Display color info
-        if isinstance(color_spec, str):
-            if color_spec == "original":
-                color_info = "Using original colors"
-            else:
-                color_info = f"Single color: {color_spec}"
-        else:
-            color_info = f"Using {len(color_spec)} colors with dynamic coloring"
-
-        ax.text(0.5, 0.5, color_info, ha="center", fontsize=10)
-
-        # Add note that this is a placeholder
-        ax.text(
-            0.5,
-            0.3,
-            "This is a placeholder for KEGG pathway map visualization",
-            ha="center",
-            fontsize=10,
-            style="italic",
-        )
-        ax.text(
-            0.5,
-            0.2,
-            "In a real implementation, the actual pathway would be drawn here",
-            ha="center",
-            fontsize=10,
-            style="italic",
-        )
-
-        ax.axis("off")
-        plt.tight_layout()
-        plt.savefig(out_path, format="pdf")
-        plt.close()
-
-    def _name_pathway(self, pathway_number: str) -> str:
-        """
-        Format the pathway name corresponding to the number for suitability in file paths.
-
-        Replace all non-alphanumeric characters except parentheses, brackets, and curly braces with
-        underscores. Replace multiple consecutive underscores with a single underscore. Strip
-        leading and trailing underscores.
-
-        Parameters
-        ==========
-        pathway_number : str
-            Numeric ID of a pathway map.
-
-        Returns
-        =======
-        str
-            Altered version of the pathway name.
-        """
-        try:
-            pathway_name = self.pathway_names[pathway_number]
-        except KeyError:
-            print(
-                f"WARNING: Pathway number '{pathway_number}' not found in pathway names"
-            )
-            return "unknown_pathway"
-
-        # Sanitize the name for use in file paths
-        altered = re.sub(r"[^a-zA-Z0-9()\[\]\{\}]", "_", pathway_name)
-        altered = re.sub(r"_+", "_", altered)
-        altered = altered.strip("_")
-
-        return altered
-
-    def _symlink_map(self, output_dir: str, map_path: str) -> None:
-        """
-        Make a symlink for a map file in a dedicated symlink directory.
-
-        Parameters
-        ==========
-        output_dir : str
-            Path to the output directory in which the map file was drawn.
-
-        map_path : str
-            Map file path to be symlinked.
-        """
-        symlink_dir = os.path.join(output_dir, "symlink")
-        os.makedirs(symlink_dir, exist_ok=True)
-        map_basename = os.path.basename(map_path)
-        symlink_path = os.path.join(symlink_dir, map_basename)
-        if os.path.exists(symlink_path):
-            os.remove(symlink_path)
-        os.symlink(os.path.abspath(map_path), symlink_path)
+        # Make the canvas for the map
+        canvas = KGMLCanvas(pathway)
+        # Settings
+        # This controls the transparency, or alpha, of the background color of
+        # compound graphics rendered from KGML for non-reactants, or compounds
+        # that don't participate in reactions. This value is used to set the
+        # attribute of 'Bio.Graphics.KGML_vis.KGMLCanvas'; the default value of
+        # 0.3 allows the color of compound circles in underlying global base
+        # maps to bleed through, which is not desirable.
+        canvas.non_reactant_transparency = 1.0
+        # I assume this is what I need to get the background of the image
+        canvas.import_imagemap = True
+        # Draw
+        canvas.draw(os.path.join(output_dir, out_basename))
 
     def _categorize_pathways(self) -> dict[str, list[str]]:
         """
