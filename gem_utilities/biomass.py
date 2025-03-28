@@ -138,6 +138,19 @@ def check_biomass_producibility(
     # Make a dictionary to store the producibility results
     biomass_producibility = {}
 
+    # Add negative controls if requested
+    if media_negative_controls:
+        controls = {"empty": {}}
+        # Loop through the media definitions and add a negative control for each
+        unique_media = growth_phenotypes["minimal_media"].unique()
+        for media in unique_media:
+            controls[media] = media_definitions[media].copy()
+        # Test the negative controls
+        for cntrl_name, cntrl_medium in controls.items():
+            biomass_producibility[cntrl_name] = try_biomass_in_one_medium(
+                cntrl_medium, unlumped_compounds, model
+            )
+
     # Check the producibility of the biomass componets on the different carbon sources
     for index, row in growth_phenotypes.iterrows():
         # Make an ID for the results that is combination of the minimal media name and the carbon source
