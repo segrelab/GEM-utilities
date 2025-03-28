@@ -59,28 +59,52 @@ def unlump_biomass(
 
 
 def check_biomass_producibility(
-    model,
-    growth_phenotypes,
-    media_definitions,
-    biomass_rxn="bio1_biomass",
-    external_compartment="e0",
-    lumped_biomass_components=["cpd11461_c0", "cpd11463_c0", "cpd11462_c0"],
-    out_dir=".",
+    model: cobra.Model,
+    growth_phenotypes: pd.DataFrame,
+    media_definitions: dict,
+    media_negative_controls: bool = True,
+    biomass_rxn: str = "bio1_biomass",
+    external_compartment: str = "e0",
+    lumped_biomass_components: List[str] = [
+        "cpd11461_c0",
+        "cpd11463_c0",
+        "cpd11462_c0",
+    ],
+    out_dir: str = ".",
 ) -> None:
     """
-    Add exchange reactions for all metabolites in the model and test the producibility of the biomass components on the given media
+    _summary_
 
-    Args:
-    model (cobra.Model): The model to test
-    growth_phenotypes (pandas.DataFrame): A dataframe with columns "minimal_media", "c_source", "met_id", and "growth"
-    media_definitions (dict): A dictionary of media definitions
-    biomass_rxn (str): The ID of the biomass reaction in the model. Default is "bio1_biomass" (which is used in KBase models).
-    lumped_biomass_components (list): List of metabolites that are lumped in the biomass reaction (defaults to
-        ['cpd11461_c0', 'cpd11463_c0', 'cpd11462_c0'] which is DNA, protein, and RNA respectively)
-    out_dir (str): The directory to save the results to. Default is the current directory.
+    Parameters
+    ----------
+    model : cobra.Model
+        The model to test
+    growth_phenotypes : pd.DataFrame
+        A dataframe with columns "minimal_media", "c_source", "met_id", and
+        "growth"
+    media_definitions : dict
+        A dictionary of media definitions
+    media_negative_controls : bool, optional
+        Do you want to show negative controls for each media on the heatmap?,
+        by default True
+    biomass_rxn : str, optional
+        the reaction ID for the biomass reaction in the model, by default
+        "bio1_biomass"
+    external_compartment : str, optional
+        the comparement ID for the extracellular compartment in the model, by
+        default "e0"
+    lumped_biomass_components : List[str], optional
+        List of the biomass components which are pseudo-metabolites to break
+        into their constituent parts (e.g. DNA, RNA, and protein), by default
+        [ "cpd11461_c0", "cpd11463_c0", "cpd11462_c0", ]
+    out_dir : str, optional
+        the directory in which to save the results, by default "."
 
-    Returns:
-    None. The results are saved to a CSV file and a heatmap plot is saved to a file
+    Raises
+    ------
+    ValueError
+        The growth_phenotypes dataframe does not have the required columns:
+        minimal_media, c_source, met_id, and growth
     """
     # Check that the growth phenotypes dataframe has the expected columns
     expected_columns = ["minimal_media", "c_source", "met_id", "growth"]
