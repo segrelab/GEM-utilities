@@ -63,6 +63,7 @@ def check_biomass_producibility(
     growth_phenotypes: pd.DataFrame,
     media_definitions: dict,
     media_negative_controls: bool = True,
+    sinks_for_all: bool = True,
     biomass_rxn: str = "bio1_biomass",
     external_compartment: str = "e0",
     lumped_biomass_components: List[str] = [
@@ -87,6 +88,9 @@ def check_biomass_producibility(
     media_negative_controls : bool, optional
         Do you want to show negative controls for each media on the heatmap?,
         by default True
+    sinks_for_all : bool, optional
+        Do you want to add sink reactions for all metabolites in the model or
+        just for the other biomass compontents?, by default True
     biomass_rxn : str, optional
         the reaction ID for the biomass reaction in the model, by default
         "bio1_biomass"
@@ -114,13 +118,22 @@ def check_biomass_producibility(
             + ", ".join(expected_columns)
         )
 
-    # Add sink reactions for all metabolites, but set the lower bound to 0
-    # because by default the sink reactions are reversible, and so can be
-    # used to import metabolites that are not in the media
-    for metabolite in model.metabolites:
-        # Check if there is already a sink reaction for this metabolite
-        if "SK_" + metabolite.id not in [r.id for r in model.reactions]:
-            model.add_boundary(metabolite, type="sink", lb=0)
+    # Add sinks, either for all metabolites, or juts for the biomass components
+    if sinks_for_all:
+        # Add sink reactions for all metabolites, but set the lower bound to 0
+        # because by default the sink reactions are reversible, and so can be
+        # used to import metabolites that are not in the media
+        for metabolite in model.metabolites:
+            # Check if there is already a sink reaction for this metabolite
+            if "SK_" + metabolite.id not in [r.id for r in model.reactions]:
+                model.add_boundary(metabolite, type="sink", lb=0)
+    else:
+        # Add sink reactions for just the biomass components
+        for metabolite in model.reactions.get_by_id(biomass_rxn).reactants:
+            if metabolite.id in growth_phenotypes["met_id"].values:
+                # Check if there is already a sink reaction for this metabolite
+                if "SK_" + metabolite.id not in [r.id for r in model.reactions]:
+                    model.add_boundary(metabolite, type="sink", lb=0)
 
     # Get the biomass composition from the model
     biomass_rxn = model.reactions.get_by_id(biomass_rxn)
