@@ -118,23 +118,6 @@ def check_biomass_producibility(
             + ", ".join(expected_columns)
         )
 
-    # Add sinks, either for all metabolites, or juts for the biomass components
-    if sinks_for_all:
-        # Add sink reactions for all metabolites, but set the lower bound to 0
-        # because by default the sink reactions are reversible, and so can be
-        # used to import metabolites that are not in the media
-        for metabolite in model.metabolites:
-            # Check if there is already a sink reaction for this metabolite
-            if "SK_" + metabolite.id not in [r.id for r in model.reactions]:
-                model.add_boundary(metabolite, type="sink", lb=0)
-    else:
-        # Add sink reactions for just the biomass components
-        for metabolite in model.reactions.get_by_id(biomass_rxn).reactants:
-            if metabolite.id in growth_phenotypes["met_id"].values:
-                # Check if there is already a sink reaction for this metabolite
-                if "SK_" + metabolite.id not in [r.id for r in model.reactions]:
-                    model.add_boundary(metabolite, type="sink", lb=0)
-
     # Get the biomass composition from the model
     biomass_rxn = model.reactions.get_by_id(biomass_rxn)
     biomass_compounds = [
@@ -147,6 +130,27 @@ def check_biomass_producibility(
         unlumped_compounds = unlump_biomass(model, biomass_compounds)
     else:
         unlumped_compounds = biomass_compounds
+
+    # Add sinks, either for all metabolites, or juts for the biomass components
+    if sinks_for_all:
+        # Add sink reactions for all metabolites, but set the lower bound to 0
+        # because by default the sink reactions are reversible, and so can be
+        # used to import metabolites that are not in the media
+        for metabolite in model.metabolites:
+            # Check if there is already a sink reaction for this metabolite
+            if "SK_" + metabolite.id not in [r.id for r in model.reactions]:
+                model.add_boundary(metabolite, type="sink", lb=0)
+        # Set the string about sinks to be added to the results files
+        sinks = "all_sinks"
+    else:
+        # Add sink reactions for just the biomass components
+        for met_id in unlumped_compounds:
+            metabolite = model.metabolites.get_by_id(met_id)
+            # Check if there is already a sink reaction for this metabolite
+            if "SK_" + metabolite.id not in [r.id for r in model.reactions]:
+                model.add_boundary(metabolite, type="sink", lb=0)
+        # Set the string about sinks to be added to the results files
+        sinks = "biomass_sinks_only"
 
     # Make a dictionary to store the producibility results
     biomass_producibility = {}
@@ -184,10 +188,10 @@ def check_biomass_producibility(
     # Make a dataframe of the producibility results and save it to a CSV file
     df = pd.DataFrame.from_dict(biomass_producibility)
     # Save the dataframe to a CSV file and make the file name specific the the model.id
-    df.to_csv(os.path.join(out_dir, model.id + "_biomass_producibility.csv"))
+    df.to_csv(os.path.join(out_dir, model.id + "_biomass_producibility_" + sinks + ".csv"))
 
     # Plot the producibility results
-    plot_biomass_prodcubility(model, df, out_dir=out_dir)
+    plot_biomass_prodcubility(model, df, sinks, out_dir=out_dir)
 
 
 def try_biomass_in_one_medium(medium_dict, biomass_compounds, model):
@@ -217,13 +221,14 @@ def try_biomass_in_one_medium(medium_dict, biomass_compounds, model):
     return results
 
 
-def plot_biomass_prodcubility(model: cobra.Model, df: pd.DataFrame, out_dir="."):
+def plot_biomass_prodcubility(model: cobra.Model, df: pd.DataFrame, sinks, out_dir="."):
     """
     Plot the producibility results as a heatmap
 
     Args:
     model (cobra.Model): The model that was tested
     df (pandas.DataFrame): The producibility results as a dataframe
+    sinks (str): The name of the sink reactions that were added
 
     Returns:
     None. The plot is saved to a file.
@@ -264,4 +269,4 @@ def plot_biomass_prodcubility(model: cobra.Model, df: pd.DataFrame, out_dir=".")
     plt.tight_layout()
 
     # Save the plot
-    plt.savefig(os.path.join(out_dir, model.id + "_biomass_producibility_heatmap.png"))
+    plt.savefig(os.path.join(out_dir, model.id + "_biomass_producibility_heatmap_" + sinks + ".png"))
