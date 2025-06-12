@@ -307,6 +307,8 @@ def calculate_biomass_weight(
         "cpd11463_c0",
         "cpd11462_c0",
     ],
+    save_work_table: bool = False,
+    out_dir: str = None,
 ) -> float:
     """
     Calculate the weight of the biomass reaction in the model.
@@ -321,12 +323,23 @@ def calculate_biomass_weight(
         List of the biomass components which are pseudo-metabolites to break
         into their constituent parts (e.g. DNA, RNA, and protein), by default
         [ "cpd11461_c0", "cpd11463_c0", "cpd11462_c0"]
+    save_work_table : bool, optional
+        If True, save the work table to a CSV file, by default False
+    out_dir : str, optional
+        The directory in which to save the work table, by default None
 
     Returns
     -------
     float
-        Weight of the biomass reaction in XXX.
+        Weight of the biomass reaction in grams per mole (which is the unit of
+        molecular mass).
     """
+    # If save_work_table is True, make sure that out_dir is set
+    if save_work_table and out_dir is None:
+        raise ValueError(
+            "If save_work_table is True, out_dir must be set to a valid directory."
+        )
+
     # Get the biomass reaction
     biomass_rxn = model.reactions.get_by_id(biomass_rxn)
 
@@ -363,11 +376,40 @@ def calculate_biomass_weight(
 
     # Calculate the weight of the biomass reaction
     weight = 0.0
-    for metabolite, coeff in biomass_rxn.metabolites.items():
+    if save_work_table:
+        # Create a list to store the work table
+        work_table = []
+    # Loop through the metabolites in the biomass reaction
+    for metabolite, coeff in unlumped_stoichiometry.items():
         # Multiply the formula weight of the metabolite by its coefficient
         # Use the opposite sign of the coefficient because the biomass weight
         # should include the consumed metabolites (negative coefficient) and
         # not the produced ones (positive coefficient)
         weight += metabolite.formula_weight * (-1 * coeff)
+        # Save the information to the work table if requested
+        if save_work_table:
+            work_table.append(
+                {
+                    "metabolite": metabolite.id,
+                    "coefficient": coeff,
+                    "formula": metabolite.formula,
+                    "formula_weight": metabolite.formula_weight,
+                    "weight_contribution": metabolite.formula_weight * (-1 * coeff),
+                }
+            )
 
+    # If requested, save the work table to a CSV file
+    if save_work_table:
+        # Convert the work table to a DataFrame
+        work_table_df = pd.DataFrame(work_table)
+        # Save the DataFrame to a CSV file
+        work_table_df.to_csv(
+            os.path.join(out_dir, model.id + "_biomass_weight_work_table.csv"),
+            index=False,
+        )
+    # Return the weight of the biomass reaction
+    if weight < 0:
+        raise ValueError("The biomass weight cannot be negative. Check the model.")
+    if weight == 0:
+        raise ValueError("The biomass weight cannot be zero. Check the model.")
     return weight
