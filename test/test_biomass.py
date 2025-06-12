@@ -29,23 +29,26 @@ class TestUnlumpBiomass(unittest.TestCase):
             {damp: -1.0, dcmp: -1.0, dgmp: -1.0, dtmp: -1.0, dna: 1.0}
         )
 
-        # Add the reaction to the model
-        self.model.add_reactions([dna_synth])
+        # Create a biomass reaction that consumes the DNA
+        self.biomass = Reaction("Biomass")
+        self.biomass.add_metabolites({dna: -1.0})
 
-        # Biomass compounds list
-        self.biomass_compounds = ["cpd11461_c0"]
+        # Add the reaction to the model
+        self.model.add_reactions([dna_synth, self.biomass])
 
     def test_unlump_biomass(self):
         # Expected output
-        expected_unlumped = ["dAMP_c0", "dCMP_c0", "dGMP_c0", "dTMP_c0"]
+        expected_unlumped = {"dAMP_c0": -1, "dCMP_c0": -1, "dGMP_c0": -1, "dTMP_c0": -1}
 
         # Run the unlump_biomass function
         result = unlump_biomass(
-            self.model, self.biomass_compounds, lumped_metabolites=["cpd11461_c0"]
+            self.biomass.metabolites, self.model, lumped_metabolites=["cpd11461_c0"]
         )
 
         # Check if the result matches the expected output
-        self.assertEqual(sorted(result), sorted(expected_unlumped))
+        # Use the metabolite IDs as keys to avoid issues with the metabolite
+        # object location changing
+        self.assertEqual({m.id: s for m, s in result.items()}, expected_unlumped)
 
 
 class TestBiomassComponentProducibility(unittest.TestCase):
