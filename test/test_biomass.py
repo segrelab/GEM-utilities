@@ -6,7 +6,11 @@ import cobra
 import pandas as pd
 from cobra import Metabolite, Model, Reaction
 
-from gem_utilities.biomass import check_biomass_producibility, unlump_biomass, calculate_biomass_weight
+from gem_utilities.biomass import (
+    calculate_biomass_weight,
+    check_biomass_producibility,
+    unlump_biomass,
+)
 
 TESTFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
@@ -116,6 +120,9 @@ class TestBiomassWeight(unittest.TestCase):
         met_b = Metabolite("B", name="Metabolite B", compartment="c0", formula="H")
         met_c = Metabolite("C", name="Metabolite C", compartment="c0", formula="H")
 
+        # Make a metabolite with no formula weight
+        met_d = Metabolite("D", name="Metabolite D", compartment="c0")
+
         # Make ATP, ADP, and Pi metabolites with real formulas/weights
         atp = Metabolite("ATP", name="ATP", compartment="c0", formula="C10H12N5O13P3")
         adp = Metabolite("ADP", name="ADP", compartment="c0", formula="C10H12N5O10P2")
@@ -130,6 +137,17 @@ class TestBiomassWeight(unittest.TestCase):
                 met_a: -1.0,
                 met_b: -1.0,
                 met_c: -1.0,
+            }
+        )
+
+        # Create a biomass reaction that includes a metabolite with no formula weight
+        biomass_no_GAM_missing_weight = Reaction("Biomass_no_GAM_missing_weight")
+        biomass_no_GAM_missing_weight.add_metabolites(
+            {
+                met_a: -1.0,
+                met_b: -1.0,
+                met_c: -1.0,
+                met_d: -1.0,  # This metabolite has no formula weight
             }
         )
 
@@ -153,18 +171,41 @@ class TestBiomassWeight(unittest.TestCase):
         self.model_no_GAM.add_reactions([biomass_no_GAM])
         self.model_with_GAM = Model("test_model_with_GAM")
         self.model_with_GAM.add_reactions([biomass_with_GAM])
+        self.model_missing_weight = Model("test_model_missing_weight")
+        self.model_missing_weight.add_reactions([biomass_no_GAM_missing_weight])
 
-    def test_calculate_biomass_weight(self):
+    def test_calculate_biomass_weight_toy_models(self):
         """Test the calculate_biomass_weight function using toy models"""
         exp_weight = 3.0
 
         # Calculate the biomass weight without GAM
-        weight_no_GAM = calculate_biomass_weight(self.model_no_GAM, "Biomass_no_GAM")
+        weight_no_GAM = calculate_biomass_weight(
+            self.model_no_GAM, "Biomass_no_GAM", lumped_biomass_components=None
+        )
         self.assertAlmostEqual(weight_no_GAM, exp_weight, places=1)
 
         # Calculate the biomass weight with GAM
-        weight_with_GAM = calculate_biomass_weight(self.model_with_GAM, "Biomass_with_GAM")
+        weight_with_GAM = calculate_biomass_weight(
+            self.model_with_GAM, "Biomass_with_GAM", lumped_biomass_components=None
+        )
         self.assertAlmostEqual(weight_with_GAM, exp_weight, places=1)
+
+        # Check that the function raises an error for a biomass reaction with a
+        # metabolite that has no formula weight
+        with self.assertRaises(ValueError):
+            calculate_biomass_weight(
+                self.model_missing_weight,
+                "Biomass_no_GAM_missing_weight",
+                lumped_biomass_components=None,
+            )
+
+    def test_calculate_biomass_weight_e_coli(self):
+        """Test the calculate_biomass_weight function using the E. coli core model"""
+        model = cobra.io.load_model("iML1515")
+        weight = calculate_biomass_weight(
+            model, "BIOMASS_Ec_iML1515_WT_75p37M", lumped_biomass_components=None
+        )
+        self.assertAlmostEqual(weight, 0.0, places=1)
 
 
 if __name__ == "__main__":

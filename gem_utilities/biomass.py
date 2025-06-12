@@ -333,6 +333,13 @@ def calculate_biomass_weight(
     # "Un-lump" the biomass so that any lumped biomass component (e.g. DNA) is
     # separated into its constituent metabolites (e.g. dAMP, dCMP, dGMP, dTMP)
     if lumped_biomass_components:
+        # Check that the lumped biomass components are in the model
+        for lumped_met in lumped_biomass_components:
+            if lumped_met not in [m.id for m in model.metabolites]:
+                raise ValueError(
+                    f"Lumped biomass component {lumped_met} is not in the model."
+                )
+        # Unlump the biomass reaction metabolites to get the new stoichiometry
         unlumped_stoichiometry = unlump_biomass(
             biomass_rxn.metabolites,
             model,
