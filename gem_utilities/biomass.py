@@ -402,6 +402,17 @@ def calculate_biomass_weight(
     if save_work_table:
         # Convert the work table to a DataFrame
         work_table_df = pd.DataFrame(work_table)
+        # Add a row for the total weight of the biomass reaction
+        work_table_df = work_table_df.append(
+            {
+                "metabolite": "Total",
+                "coefficient": "",
+                "formula": "",
+                "formula_weight": "",
+                "weight_contribution": weight,
+            },
+            ignore_index=True,
+        )
         # Save the DataFrame to a CSV file
         work_table_df.to_csv(
             os.path.join(out_dir, model.id + "_biomass_weight_work_table.csv"),
