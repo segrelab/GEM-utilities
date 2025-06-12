@@ -116,7 +116,7 @@ def check_biomass_producibility(
     lumped_biomass_components : List[str], optional
         List of the biomass components which are pseudo-metabolites to break
         into their constituent parts (e.g. DNA, RNA, and protein), by default
-        [ "cpd11461_c0", "cpd11463_c0", "cpd11462_c0", ]
+        [ "cpd11461_c0", "cpd11463_c0", "cpd11462_c0"]
     out_dir : str, optional
         the directory in which to save the results, by default "."
 
@@ -297,3 +297,70 @@ def plot_biomass_prodcubility(model: cobra.Model, df: pd.DataFrame, sinks, out_d
             out_dir, model.id + "_biomass_producibility_heatmap_" + sinks + ".png"
         )
     )
+
+
+def calculate_biomass_weight(
+    model: cobra.Model,
+    biomass_rxn: str = "bio1_biomass",
+    lumped_biomass_components: List[str] = [
+        "cpd11461_c0",
+        "cpd11463_c0",
+        "cpd11462_c0",
+    ],
+) -> float:
+    """
+    Calculate the weight of the biomass reaction in the model.
+
+    Parameters
+    ----------
+    model : cobra.Model
+        The model to use for the biomass reaction.
+    biomass_rxn : str, optional
+        The ID of the biomass reaction, by default "bio1_biomass"
+    lumped_biomass_components : List[str], optional
+        List of the biomass components which are pseudo-metabolites to break
+        into their constituent parts (e.g. DNA, RNA, and protein), by default
+        [ "cpd11461_c0", "cpd11463_c0", "cpd11462_c0"]
+
+    Returns
+    -------
+    float
+        Weight of the biomass reaction in XXX.
+    """
+    # Get the biomass reaction
+    biomass_rxn = model.reactions.get_by_id(biomass_rxn)
+
+    # "Un-lump" the biomass so that any lumped biomass component (e.g. DNA) is
+    # separated into its constituent metabolites (e.g. dAMP, dCMP, dGMP, dTMP)
+    if lumped_biomass_components:
+        unlumped_stoichiometry = unlump_biomass(
+            biomass_rxn.metabolites,
+            model,
+            lumped_metabolites=lumped_biomass_components,
+        )
+    else:
+        unlumped_stoichiometry = biomass_rxn.metabolites
+
+    # Make sure that the stoichiometry is a dictionary
+    if not isinstance(unlumped_stoichiometry, dict):
+        raise ValueError(
+            "The stoichiometry of the biomass reaction is not a dictionary."
+        )
+
+    # Make sure that all of the metabolites in the stoichiometry have a formula weight that is not 0
+    for metabolite in unlumped_stoichiometry:
+        if not hasattr(metabolite, "formula_weight") or metabolite.formula_weight == 0:
+            raise ValueError(
+                f"The metabolite {metabolite.id} does not have a formula weight."
+            )
+
+    # Calculate the weight of the biomass reaction
+    weight = 0.0
+    for metabolite, coeff in biomass_rxn.metabolites.items():
+        # Multiply the formula weight of the metabolite by its coefficient
+        # Use the opposite sign of the coefficient because the biomass weight
+        # should include the consumed metabolites (negative coefficient) and
+        # not the produced ones (positive coefficient)
+        weight += metabolite.formula_weight * (-1 * coeff)
+
+    return weight

@@ -6,7 +6,7 @@ import cobra
 import pandas as pd
 from cobra import Metabolite, Model, Reaction
 
-from gem_utilities.biomass import check_biomass_producibility, unlump_biomass
+from gem_utilities.biomass import check_biomass_producibility, unlump_biomass, calculate_biomass_weight
 
 TESTFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
@@ -104,6 +104,67 @@ minimal,acetate,ac,Yes
             os.remove("e_coli_core_biomass_producibility_heatmap_all_sinks.png")
         if os.path.exists("e_coli_core_biomass_producibility_all_sinks.csv"):
             os.remove("e_coli_core_biomass_producibility_all_sinks.csv")
+
+
+class TestBiomassWeight(unittest.TestCase):
+    def setUp(self):
+        # Create metabolites each with a formula weight of ~1.0
+        # Because you cannot set the formula weight directly (it is calculated
+        # from the formula), we create the metabolites with a formula of "H"
+        # to give them a weight of 1.00794.
+        met_a = Metabolite("A", name="Metabolite A", compartment="c0", formula="H")
+        met_b = Metabolite("B", name="Metabolite B", compartment="c0", formula="H")
+        met_c = Metabolite("C", name="Metabolite C", compartment="c0", formula="H")
+
+        # Make ATP, ADP, and Pi metabolites with real formulas/weights
+        atp = Metabolite("ATP", name="ATP", compartment="c0", formula="C10H12N5O13P3")
+        adp = Metabolite("ADP", name="ADP", compartment="c0", formula="C10H12N5O10P2")
+        pi = Metabolite("Pi", name="Phosphate", compartment="c0", formula="HO4P")
+        h2o = Metabolite("H2O", name="Water", compartment="c0", formula="H2O")
+        h = Metabolite("H", name="H+ Ion", compartment="c0", formula="H")
+
+        # Create a biomass reaction that consumes the metabolites
+        biomass_no_GAM = Reaction("Biomass_no_GAM")
+        biomass_no_GAM.add_metabolites(
+            {
+                met_a: -1.0,
+                met_b: -1.0,
+                met_c: -1.0,
+            }
+        )
+
+        # Create a biomass reaction that includes the growth associated maintenance
+        biomass_with_GAM = Reaction("Biomass_with_GAM")
+        biomass_with_GAM.add_metabolites(
+            {
+                met_a: -1.0,
+                met_b: -1.0,
+                met_c: -1.0,
+                atp: -1.0,
+                h2o: -1.0,
+                adp: 1.0,
+                pi: 1.0,
+                h: 1.0,
+            }
+        )
+
+        # Create models for the two biomass reactions
+        self.model_no_GAM = Model("test_model_no_GAM")
+        self.model_no_GAM.add_reactions([biomass_no_GAM])
+        self.model_with_GAM = Model("test_model_with_GAM")
+        self.model_with_GAM.add_reactions([biomass_with_GAM])
+
+    def test_calculate_biomass_weight(self):
+        """Test the calculate_biomass_weight function using toy models"""
+        exp_weight = 3.0
+
+        # Calculate the biomass weight without GAM
+        weight_no_GAM = calculate_biomass_weight(self.model_no_GAM, "Biomass_no_GAM")
+        self.assertAlmostEqual(weight_no_GAM, exp_weight, places=1)
+
+        # Calculate the biomass weight with GAM
+        weight_with_GAM = calculate_biomass_weight(self.model_with_GAM, "Biomass_with_GAM")
+        self.assertAlmostEqual(weight_with_GAM, exp_weight, places=1)
 
 
 if __name__ == "__main__":
