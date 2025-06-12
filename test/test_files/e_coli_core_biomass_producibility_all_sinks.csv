@@ -1,0 +1,17 @@
+,empty,minimal,minimal_control,minimal_glucose,minimal_acetate
+3-Phospho-D-glycerate,False,False,False,True,True
+Acetyl-CoA,False,False,False,False,False
+ATP,False,False,False,False,False
+D-Erythrose 4-phosphate,False,False,False,True,True
+D-Fructose 6-phosphate,False,False,False,True,True
+Glyceraldehyde 3-phosphate,False,False,False,True,True
+D-Glucose 6-phosphate,False,False,False,True,True
+L-Glutamine,False,False,False,True,True
+L-Glutamate,False,False,False,True,True
+H2O,False,True,True,True,True
+Nicotinamide adenine dinucleotide,False,False,False,False,False
+Nicotinamide adenine dinucleotide phosphate - reduced,False,False,False,False,False
+Oxaloacetate,False,False,False,True,True
+Phosphoenolpyruvate,False,False,False,True,True
+Pyruvate,False,False,False,True,True
+alpha-D-Ribose 5-phosphate,False,False,False,True,True

@@ -8,6 +8,8 @@ from cobra import Metabolite, Model, Reaction
 
 from gem_utilities.biomass import check_biomass_producibility, unlump_biomass
 
+TESTFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
+
 
 class TestUnlumpBiomass(unittest.TestCase):
     def setUp(self):
@@ -86,17 +88,19 @@ minimal,acetate,ac,Yes
 
         # Compare the resulting CSV file with the expected output
         expected_csv = pd.read_csv(
-            "test/test_files/e_coli_core_biomass_producibility.csv"
+            os.path.join(
+                TESTFILE_DIR, "e_coli_core_biomass_producibility_all_sinks.csv"
+            )
         )
-        result_csv = pd.read_csv("e_coli_core_biomass_producibility.csv")
+        result_csv = pd.read_csv("e_coli_core_biomass_producibility_all_sinks.csv")
         pd.testing.assert_frame_equal(expected_csv, result_csv)
 
     def tearDown(self):
         # Clean up the test files
-        if os.path.exists("e_coli_core_biomass_producibility_heatmap.png"):
-            os.remove("e_coli_core_biomass_producibility_heatmap.png")
-        if os.path.exists("e_coli_core_biomass_producibility.csv"):
-            os.remove("e_coli_core_biomass_producibility.csv")
+        if os.path.exists("e_coli_core_biomass_producibility_heatmap_all_sinks.png"):
+            os.remove("e_coli_core_biomass_producibility_heatmap_all_sinks.png")
+        if os.path.exists("e_coli_core_biomass_producibility_all_sinks.csv"):
+            os.remove("e_coli_core_biomass_producibility_all_sinks.csv")
 
 
 if __name__ == "__main__":
