@@ -201,11 +201,34 @@ class TestBiomassWeight(unittest.TestCase):
 
     def test_calculate_biomass_weight_e_coli(self):
         """Test the calculate_biomass_weight function using the E. coli core model"""
-        model = cobra.io.load_model("iML1515")
-        weight = calculate_biomass_weight(
-            model, "BIOMASS_Ec_iML1515_WT_75p37M", lumped_biomass_components=None
+        # Set what the expected outputs are
+        exp_weight = 999.0
+        exp_table = pd.read_csv(
+            os.path.join(TESTFILE_DIR, "iML1515_biomass_weight_work_table.csv")
         )
-        self.assertAlmostEqual(weight, 999, places=0)
+
+        # Load the full E. coli from COBRApy
+        model = cobra.io.load_model("iML1515")
+
+        # Calculate the biomass weight and save the work table
+        weight = calculate_biomass_weight(
+            model,
+            "BIOMASS_Ec_iML1515_WT_75p37M",
+            lumped_biomass_components=None,
+            save_work_table=True,
+            out_dir=".",
+        )
+
+        # Compare the returned weight with the expected value
+        self.assertAlmostEqual(weight, exp_weight, places=0)
+        # Check that the work table matches the expected output
+        work_table = pd.read_csv("iML1515_biomass_weight_work_table.csv")
+        pd.testing.assert_frame_equal(work_table, exp_table)
+
+    def tearDown(self):
+        # Clean up the test files
+        if os.path.exists("iML1515_biomass_weight_work_table.csv"):
+            os.remove("iML1515_biomass_weight_work_table.csv")
 
 
 if __name__ == "__main__":
