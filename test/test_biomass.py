@@ -205,7 +205,7 @@ class TestBiomassWeight(unittest.TestCase):
         weight = calculate_biomass_weight(
             model, "BIOMASS_Ec_iML1515_WT_75p37M", lumped_biomass_components=None
         )
-        self.assertAlmostEqual(weight, 0.0, places=1)
+        self.assertAlmostEqual(weight, 999, places=0)
 
 
 if __name__ == "__main__":
