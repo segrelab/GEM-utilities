@@ -10,8 +10,8 @@ from gem_utilities.media import clean_media
 
 
 def unlump_biomass(
+    biomass_metabolites: dict,
     model: cobra.Model,
-    biomass_compounds: List[str],
     lumped_metabolites=["cpd11461_c0", "cpd11463_c0", "cpd11462_c0"],
 ) -> List[str]:
     """
@@ -19,8 +19,10 @@ def unlump_biomass(
     separated into its constituent metabolites (e.g. dAMP, dCMP, dGMP, dTMP)
 
     Args:
-    model (cobra.Model): The model to test
-    biomass_compounds (list): List of biomass compounds to test
+    biomass_metabolites (dict): Metabolites attribute of the model's biomass
+        reaction, where the keys are metabolite IDs and the values are their
+        stoichiometric coefficients
+    model (cobra.Model): The model to use for the biomass reaction
     lumped_metabolites (list): List of metabolites that are lumped in the
         biomass reaction (defaults to
         ['cpd11461_c0', 'cpd11463_c0', 'cpd11462_c0'] which is DNA, protein,
@@ -29,33 +31,47 @@ def unlump_biomass(
     Returns:
     list: List of individual metabolites that make up the biomass
     """
-    # Make a copy of the biomass compounds
-    unlumped_compounds = biomass_compounds.copy()
+    # Make a new metabolite/coefficient dictionary for the biomass reaction
+    # with "unlumped" components
+    unlumped_metabolites = {}
 
-    # Loop through the lumped metabolites
-    for lumped_metabolite in lumped_metabolites:
-        # Remove the metabolite from the list of biomass compounds
-        unlumped_compounds.remove(lumped_metabolite)
-        # Find the reaction in the model that makes the lumped metabolite
-        synth_rxn = [
-            r
-            for r in model.reactions
-            if model.metabolites.get_by_id(lumped_metabolite) in r.products
-        ]
-        # Throw an error if there is not exactly one reaction that makes the lumped metabolite
-        if len(synth_rxn) != 1:
-            raise ValueError(
-                "There should be exactly one reaction that makes the lumped metabolite"
-            )
-        # Get the reaction
-        synth_rxn = synth_rxn[0]
-        # Get the metabolites that are consumed in the reaction
-        substrates = [m.id for m in synth_rxn.reactants]
-        # Add the metabolites to the list of biomass compounds
-        unlumped_compounds += substrates
+    for metabolite, coeff in biomass_metabolites.items():
+        # If the metabolite is a lumped component, skip it
+        if metabolite.id in lumped_metabolites:
+            # Find the reactions that produces the lumped metabolite
+            # Find the reaction in the model that makes the lumped metabolite
+            synth_rxn = [r for r in model.reactions if metabolite in r.products]
+            # Throw an error if there is not exactly one reaction that makes the lumped metabolite
+            if len(synth_rxn) != 1:
+                raise ValueError(
+                    "There should be exactly one reaction that makes the lumped metabolite"
+                )
+            # Get the reaction
+            synth_rxn = synth_rxn[0]
+            # Loop trhough all of the metabolites in the reaction
+            for subcomponent, sub_coeff in synth_rxn.metabolites.items():
+                # If the metabolite is not a lumped component, add it to the list of biomass compounds
+                if subcomponent.id not in lumped_metabolites:
+                    # Add the metabolite and coefficient to the dictionary
+                    update_dict(
+                        unlumped_metabolites,
+                        {subcomponent: sub_coeff * abs(coeff)},
+                    )
+        # Otherwise, add the metabolite and coefficient to the dictionary
+        else:
+            update_dict(unlumped_metabolites, {metabolite: coeff})
 
-    # Return the list of individual metabolites that make up the biomass
-    return unlumped_compounds
+    # Return the new dictionary of unlumped metabolites
+    return unlumped_metabolites
+
+
+def update_dict(d, new_items):
+    """Update a dictionary with new items."""
+    for key, value in new_items.items():
+        if key in d:
+            d[key] += value
+        else:
+            d[key] = value
 
 
 def check_biomass_producibility(
