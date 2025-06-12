@@ -136,16 +136,21 @@ def check_biomass_producibility(
 
     # Get the biomass composition from the model
     biomass_rxn = model.reactions.get_by_id(biomass_rxn)
-    biomass_compounds = [
-        met.id for met in biomass_rxn.metabolites if biomass_rxn.metabolites[met] < 0
-    ]
 
     # "Un-lump" the biomass so that any lumped biomass component (e.g. DNA) is
     # separated into its constituent metabolites (e.g. dAMP, dCMP, dGMP, dTMP)
     if lumped_biomass_components:
-        unlumped_compounds = unlump_biomass(model, biomass_compounds)
+        unlumped_compounds = [
+            met.id
+            for met in unlump_biomass(model, biomass_rxn.metabolites)
+            if biomass_rxn.metabolites[met] < 0
+        ]
     else:
-        unlumped_compounds = biomass_compounds
+        unlumped_compounds = [
+            met.id
+            for met in biomass_rxn.metabolites
+            if biomass_rxn.metabolites[met] < 0
+        ]
 
     # Add sinks, either for all metabolites, or juts for the biomass components
     if sinks_for_all:
@@ -204,7 +209,9 @@ def check_biomass_producibility(
     # Make a dataframe of the producibility results and save it to a CSV file
     df = pd.DataFrame.from_dict(biomass_producibility)
     # Save the dataframe to a CSV file and make the file name specific the the model.id
-    df.to_csv(os.path.join(out_dir, model.id + "_biomass_producibility_" + sinks + ".csv"))
+    df.to_csv(
+        os.path.join(out_dir, model.id + "_biomass_producibility_" + sinks + ".csv")
+    )
 
     # Plot the producibility results
     plot_biomass_prodcubility(model, df, sinks, out_dir=out_dir)
@@ -285,4 +292,8 @@ def plot_biomass_prodcubility(model: cobra.Model, df: pd.DataFrame, sinks, out_d
     plt.tight_layout()
 
     # Save the plot
-    plt.savefig(os.path.join(out_dir, model.id + "_biomass_producibility_heatmap_" + sinks + ".png"))
+    plt.savefig(
+        os.path.join(
+            out_dir, model.id + "_biomass_producibility_heatmap_" + sinks + ".png"
+        )
+    )
